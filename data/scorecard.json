@@ -1,0 +1,293 @@
+{
+  "asOf": "AS OF MARCH 1, 2025",
+  "months": [
+    "JANUARY",
+    "FEBRUARY",
+    "MARCH",
+    "APRIL",
+    "MAY",
+    "JUNE",
+    "JULY",
+    "AUGUST",
+    "SEPTEMBER",
+    "OCTOBER",
+    "NOVEMBER",
+    "DECEMBER"
+  ],
+  "monthlyApe": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  "monthlyCc": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  "achieversClub": [
+    {
+      "goal": "Branch Achiever",
+      "target": 250000.0,
+      "reward": "Annual Quota of a PRU Agent",
+      "period": "until Dec 31, 2026"
+    },
+    {
+      "goal": "Sectoral Achiever",
+      "target": 500000.0,
+      "reward": "-",
+      "period": "until Dec 31, 2026"
+    },
+    {
+      "goal": "National Achiever",
+      "target": 750000.0,
+      "reward": "Pru Life UK Day Awards (Trophies), HMO 50% - Semi-Private, 500k Group Life Insurance",
+      "period": "until Dec 31, 2026"
+    },
+    {
+      "goal": "Senior Achiever",
+      "target": 1500000.0,
+      "reward": "Pru Life UK Day Awards (Trophies), HMO 100% - Semi-Private, 500k Group Life Insurance",
+      "period": "until Dec 31, 2026"
+    },
+    {
+      "goal": "Elite Achiever",
+      "target": 2500000.0,
+      "reward": "Pru Life UK Day Awards (Trophies), HMO 100% - Semi-Private, 750k Group Life Insurance",
+      "period": "until Dec 31, 2026"
+    },
+    {
+      "goal": "SCIC Awardee",
+      "target": 3900000.0,
+      "reward": "Pru Life UK Day Awards (Solo Recognition & Trophies), HMO 100% - Semi-Private, 1.5M Group Life Insurance, LUAP Annual Dues",
+      "period": "until Dec 31, 2026"
+    },
+    {
+      "goal": "SCIC Travel Qualification",
+      "target": 4200000.0,
+      "reward": "London, UK Travel + SCIC Awardee Rewards",
+      "period": "until Dec 31, 2026"
+    }
+  ],
+  "rookieProducersBonus": {
+    "note": "Case count reward tiers",
+    "tiers": [
+      "1-2CC: 2,000 per case count",
+      "3-5CC: 2,500 per case count",
+      "6-8CC: 3,000 per case count",
+      "9 and up: 5,000 per case count"
+    ],
+    "rewardPerCase": 2000
+  },
+  "tripQualifications": [
+    {
+      "trip": "T1: HANOI, VIETNAM",
+      "target": "500,000 (Rookie) | 750,000 (Tenured)",
+      "reward": "Hanoi, Vietnam",
+      "apeFypRange": [
+        0,
+        3
+      ]
+    },
+    {
+      "trip": "T2: TOKYO NAGANO",
+      "target": 1000000.0,
+      "reward": "Nagano & Tokyo",
+      "apeFypRange": null
+    },
+    {
+      "trip": "T3:",
+      "target": "-",
+      "reward": "-",
+      "apeFypRange": null
+    },
+    {
+      "trip": "PROTECTION DRIVE 2026",
+      "target": 1500000.0,
+      "reward": "Istanbul, Turkey",
+      "apeFypRange": [
+        0,
+        9
+      ]
+    },
+    {
+      "trip": "SCIC 2026",
+      "target": 3800000.0,
+      "reward": "London, United Kingdom",
+      "apeFypRange": "total"
+    },
+    {
+      "trip": "MDRT PCA (FYP Based)",
+      "target": 1775000,
+      "reward": "Sydney, Australia",
+      "apeFypRange": "mdrtpca"
+    },
+    {
+      "trip": "MDRT (FYP Based)",
+      "target": 3550000.0,
+      "reward": "Anaheim, California USA",
+      "apeFypRange": null
+    }
+  ],
+  "qpb": {
+    "quarters": [
+      {
+        "label": "QUARTER #1",
+        "monthIdx": [
+          0,
+          1,
+          2
+        ],
+        "fypForQuarter": 0,
+        "tiers": [
+          {
+            "target": 200000.0,
+            "percent": 0.1
+          },
+          {
+            "target": 300000.0,
+            "percent": 0.15
+          },
+          {
+            "target": 400000.0,
+            "percent": 0.2
+          },
+          {
+            "target": 600000.0,
+            "percent": 0.3
+          },
+          {
+            "target": 800000.0,
+            "percent": 0.4
+          },
+          {
+            "target": 1200000.0,
+            "percent": 0.5
+          }
+        ]
+      },
+      {
+        "label": "QUARTER #2",
+        "monthIdx": [
+          3,
+          4,
+          5
+        ],
+        "fypForQuarter": 0,
+        "tiers": [
+          {
+            "target": 200000.0,
+            "percent": 0.1
+          },
+          {
+            "target": 300000.0,
+            "percent": 0.15
+          },
+          {
+            "target": 400000.0,
+            "percent": 0.2
+          },
+          {
+            "target": 600000.0,
+            "percent": 0.3
+          },
+          {
+            "target": 800000.0,
+            "percent": 0.4
+          },
+          {
+            "target": 1200000.0,
+            "percent": 0.5
+          }
+        ]
+      },
+      {
+        "label": "QUARTER #3",
+        "monthIdx": [
+          6,
+          7,
+          8
+        ],
+        "fypForQuarter": 0,
+        "tiers": [
+          {
+            "target": 200000.0,
+            "percent": 0.1
+          },
+          {
+            "target": 300000.0,
+            "percent": 0.15
+          },
+          {
+            "target": 400000.0,
+            "percent": 0.2
+          },
+          {
+            "target": 600000.0,
+            "percent": 0.3
+          },
+          {
+            "target": 800000.0,
+            "percent": 0.4
+          },
+          {
+            "target": 1200000.0,
+            "percent": 0.5
+          }
+        ]
+      },
+      {
+        "label": "QUARTER #4",
+        "monthIdx": [
+          9,
+          10,
+          11
+        ],
+        "fypForQuarter": 0,
+        "tiers": [
+          {
+            "target": 200000.0,
+            "percent": 0.1
+          },
+          {
+            "target": 300000.0,
+            "percent": 0.15
+          },
+          {
+            "target": 400000.0,
+            "percent": 0.2
+          },
+          {
+            "target": 600000.0,
+            "percent": 0.3
+          },
+          {
+            "target": 800000.0,
+            "percent": 0.4
+          },
+          {
+            "target": 1200000.0,
+            "percent": 0.5
+          }
+        ]
+      }
+    ]
+  }
+}

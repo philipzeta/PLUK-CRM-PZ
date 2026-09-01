@@ -1,0 +1,148 @@
+{
+  "scaleLabel": "How well do I know PLUK's products?",
+  "categories": [
+    {
+      "title": "I. PROTECTION",
+      "products": [
+        {
+          "name": "Pru Life",
+          "rating": null
+        },
+        {
+          "name": "Prulink Assurance Account",
+          "rating": null
+        },
+        {
+          "name": "Prulink Assurance Account Plus",
+          "rating": null
+        },
+        {
+          "name": "PruHealth Prime",
+          "rating": null
+        },
+        {
+          "name": "PruHealth FamLove",
+          "rating": null
+        },
+        {
+          "name": "PRUAdvance",
+          "rating": null
+        },
+        {
+          "name": "PruLove for Life",
+          "rating": null
+        },
+        {
+          "name": "PruLifetime Income 5",
+          "rating": null
+        },
+        {
+          "name": "PruLifetime Income 10",
+          "rating": null
+        },
+        {
+          "name": "PruLife Your Term",
+          "rating": null
+        },
+        {
+          "name": "PRUTerm 15",
+          "rating": null
+        },
+        {
+          "name": "Olf traditional whole life plans",
+          "rating": null
+        },
+        {
+          "name": "Olf traditional endowment plans",
+          "rating": null
+        },
+        {
+          "name": "Olf traditional limited pay plans",
+          "rating": null
+        },
+        {
+          "name": "Olf traditional term plans",
+          "rating": null
+        }
+      ]
+    },
+    {
+      "title": "II. PROTECTION + INVESTMENT",
+      "products": [
+        {
+          "name": "Prulink Elite Protector 5",
+          "rating": null
+        },
+        {
+          "name": "Prulink Elite Protector 7",
+          "rating": null
+        },
+        {
+          "name": "Prulink Elite Protector 10",
+          "rating": null
+        },
+        {
+          "name": "Prulink Elite Protector 15",
+          "rating": null
+        },
+        {
+          "name": "Prulink Exact",
+          "rating": null
+        },
+        {
+          "name": "Prulink Exact Plus",
+          "rating": null
+        },
+        {
+          "name": "Prulink Exact Protector",
+          "rating": null
+        },
+        {
+          "name": "Prulink Exact Protector Low Premium",
+          "rating": null
+        },
+        {
+          "name": "PruSteady Income",
+          "rating": null
+        }
+      ]
+    },
+    {
+      "title": "III. INVESTMENT",
+      "products": [
+        {
+          "name": "Prulink Invest Account",
+          "rating": null
+        },
+        {
+          "name": "Prulink Invest Account Plus",
+          "rating": null
+        },
+        {
+          "name": "PIA Advance",
+          "rating": null
+        },
+        {
+          "name": "PruMillionaire",
+          "rating": null
+        },
+        {
+          "name": "PruMillion Flex",
+          "rating": null
+        },
+        {
+          "name": "Variable Life Rider",
+          "rating": null
+        },
+        {
+          "name": "PruLove Wealth",
+          "rating": null
+        },
+        {
+          "name": "PRUWealth 10",
+          "rating": null
+        }
+      ]
+    }
+  ]
+}

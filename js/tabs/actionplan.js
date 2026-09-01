@@ -1,0 +1,224 @@
+import { loadTab, markDirty } from '../store.js';
+import { num, fmtMoney, fmtInt, escapeHtml } from '../utils.js';
+import { computeAgape, computeActionPlan } from '../formulas.js';
+import { downloadSingleSheet, readWorkbook, parseSheetRows } from '../excel.js';
+import { showToast } from '../utils.js';
+
+function editableMonthRow(label, values, key, onChange, opts = {}) {
+  const cells = values.map((v, i) => `<td class="num"><input class="cell-input" type="number" step="any" data-i="${i}" data-key="${key}" value="${v ?? 0}" style="width:82px;text-align:right" /></td>`).join('');
+  return `<tr><td>${escapeHtml(label)}</td>${cells}</tr>`;
+}
+
+function readonlyMonthRow(label, values, fmt = fmtMoney) {
+  const cells = values.map((v) => `<td class="num">${fmt(v)}</td>`).join('');
+  return `<tr><td>${escapeHtml(label)}</td>${cells}</tr>`;
+}
+
+export async function render(container) {
+  const agape = await loadTab('agape');
+  const ap = await loadTab('action-plan');
+
+  function paint() {
+    const ac = computeAgape(agape);
+    const c = computeActionPlan(ap, ac.annualPremiumTarget);
+    const months = ap.months;
+    const monthHead = months.map((m) => `<th class="num">${escapeHtml(m.slice(0, 3))}</th>`).join('');
+
+    container.innerHTML = `
+      <div class="tab-header">
+        <div>
+          <h1 class="tab-title">🗓️ Action Plan</h1>
+          <p class="tab-subtitle">Monthly sales & recruitment targets. "Target APE" flows automatically from your AGAPE annual premium target.</p>
+        </div>
+        <div class="tab-actions">
+          <button class="btn btn-light" id="exportBtn">⬇ Export to Excel</button>
+          <label class="btn btn-light">⬆ Import from Excel<input type="file" id="importInput" accept=".xlsx,.xls" hidden /></label>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Sales</h3>
+        <div class="dg-scroll" style="max-height:none">
+          <table class="dg-table"><thead><tr><th style="position:sticky;left:0;background:#faf7fb">Metric</th>${monthHead}</tr></thead>
+          <tbody id="salesRows">
+            ${readonlyMonthRow('Target APE', c.targetApe)}
+            ${editableMonthRow('Average case size', ap.sales.averageCaseSize, 'averageCaseSize')}
+            ${editableMonthRow('Number of cases', ap.sales.numberOfCases, 'numberOfCases')}
+            ${readonlyMonthRow('Actual APE', c.actualApe)}
+            ${readonlyMonthRow('Excess / Lacking', c.excess)}
+            ${readonlyMonthRow('Income (35%)', c.income)}
+          </tbody></table>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Recruitment</h3>
+        <div style="max-width:260px;margin-bottom:10px;">
+          <label class="text-muted">Beginning manpower (January)</label>
+          <input type="number" id="beginMP" value="${ap.recruitment.beginningManpowerJan ?? 0}" />
+        </div>
+        <div class="dg-scroll" style="max-height:none">
+          <table class="dg-table"><thead><tr><th style="position:sticky;left:0;background:#faf7fb">Metric</th>${monthHead}</tr></thead>
+          <tbody id="recruitRows">
+            ${readonlyMonthRow('Beginning manpower', c.beginMP, fmtInt)}
+            ${editableMonthRow('Target new recruits', ap.recruitment.targetNewRecruits, 'targetNewRecruits')}
+            ${editableMonthRow('Provision for attrition', ap.recruitment.provisionForAttrition, 'provisionForAttrition')}
+            ${readonlyMonthRow('Ending manpower', c.endMP, fmtInt)}
+          </tbody></table>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Planning my sales activities</h3>
+        <p class="section-note">${escapeHtml(ap.successFormulaSales || '')}</p>
+        <div class="dg-scroll" style="max-height:none">
+          <table class="dg-table"><thead><tr><th style="position:sticky;left:0;background:#faf7fb">Metric</th>${monthHead}</tr></thead>
+          <tbody id="salesActRows">
+            ${editableMonthRow('Target cases for the month', ap.salesActivity.targetCasesForMonth, 'targetCasesForMonth')}
+            ${readonlyMonthRow('No. of prospects (×15)', c.prospects15, fmtInt)}
+            ${readonlyMonthRow('No. of appointments (×5)', c.appts5, fmtInt)}
+            ${readonlyMonthRow('No. of client meetings (×3)', c.meetings3, fmtInt)}
+          </tbody></table>
+        </div>
+
+        <h4>Recruitment activity</h4>
+        <div class="dg-scroll" style="max-height:none">
+          <table class="dg-table"><thead><tr><th style="position:sticky;left:0;background:#faf7fb">Metric</th>${monthHead}</tr></thead>
+          <tbody id="recruitActRows">
+            ${editableMonthRow('Target no. of coded (20% conversion)', ap.recruitmentActivity.targetCoded, 'targetCoded')}
+            ${readonlyMonthRow('No. BYB show-ups (50% show-up)', c.showUps, fmtInt)}
+            ${readonlyMonthRow('No. of confirmed BYB guests', c.confirmedBYB, fmtInt)}
+            ${readonlyMonthRow('No. of prospects', c.recProspects, fmtInt)}
+          </tbody></table>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Sample monthly calendar <span class="text-muted" style="font-weight:400;font-size:12px">(personal weekly habit template — edit freely)</span></h3>
+        <div id="calendarWrap"></div>
+      </div>
+    `;
+
+    renderCalendar();
+    wire();
+  }
+
+  function renderCalendar() {
+    const wrap = container.querySelector('#calendarWrap');
+    const days = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'];
+    wrap.innerHTML = ap.weeklyCalendar.map((wk, wi) => `
+      <h4>Week ${wk.week}</h4>
+      <table class="cal-table"><thead><tr>${days.map((d) => `<th>${d}</th>`).join('')}</tr></thead>
+      <tbody><tr>
+        ${days.map((d) => `
+          <td data-week="${wi}" data-day="${d}">
+            ${(wk.days[d] || []).map((e, ei) => `
+              <div class="cal-entry" data-ei="${ei}">
+                <input type="time" class="cal-time" value="${e.time || ''}" />
+                <input type="text" class="cal-act" value="${escapeHtml(e.activity || '')}" placeholder="Activity" />
+                <button class="dg-del-btn cal-del">✕</button>
+              </div>`).join('')}
+            <button class="btn btn-light btn-sm cal-add">+ Add</button>
+          </td>`).join('')}
+      </tr></tbody></table>
+    `).join('');
+
+    wrap.querySelectorAll('td[data-week]').forEach((td) => {
+      const wi = +td.dataset.week, day = td.dataset.day;
+      const entries = ap.weeklyCalendar[wi].days[day] || (ap.weeklyCalendar[wi].days[day] = []);
+      td.querySelectorAll('.cal-entry').forEach((row) => {
+        const ei = +row.dataset.ei;
+        row.querySelector('.cal-time').addEventListener('change', (e) => { entries[ei].time = e.target.value; markDirty('action-plan'); });
+        row.querySelector('.cal-act').addEventListener('input', (e) => { entries[ei].activity = e.target.value; markDirty('action-plan'); });
+        row.querySelector('.cal-del').addEventListener('click', () => { entries.splice(ei, 1); markDirty('action-plan'); renderCalendar(); });
+      });
+      td.querySelector('.cal-add').addEventListener('click', () => { entries.push({ time: '', activity: '' }); markDirty('action-plan'); renderCalendar(); });
+    });
+  }
+
+  function persist() { markDirty('action-plan'); paint(); }
+
+  function wire() {
+    container.querySelectorAll('#salesRows input, #recruitRows input, #salesActRows input, #recruitActRows input').forEach((input) => {
+      input.addEventListener('input', () => {
+        const i = +input.dataset.i, key = input.dataset.key, v = num(input.value);
+        if (key in ap.sales) ap.sales[key][i] = v;
+        else if (key in ap.recruitment) ap.recruitment[key][i] = v;
+        else if (key in ap.salesActivity) ap.salesActivity[key][i] = v;
+        else if (key in ap.recruitmentActivity) ap.recruitmentActivity[key][i] = v;
+        persist();
+      });
+    });
+    container.querySelector('#beginMP').addEventListener('input', (e) => { ap.recruitment.beginningManpowerJan = num(e.target.value); persist(); });
+    container.querySelector('#exportBtn').addEventListener('click', doExport);
+    container.querySelector('#importInput').addEventListener('change', doImport);
+  }
+
+  function flatten() {
+    const rows = [];
+    ap.months.forEach((m, i) => {
+      rows.push({
+        month: m,
+        averageCaseSize: num(ap.sales.averageCaseSize[i]),
+        numberOfCases: num(ap.sales.numberOfCases[i]),
+        targetNewRecruits: num(ap.recruitment.targetNewRecruits[i]),
+        provisionForAttrition: num(ap.recruitment.provisionForAttrition[i]),
+        targetCasesForMonth: num(ap.salesActivity.targetCasesForMonth[i]),
+        targetCoded: num(ap.recruitmentActivity.targetCoded[i]),
+      });
+    });
+    return rows;
+  }
+
+  function doExport() {
+    const columns = [
+      { key: 'month', header: 'Month' },
+      { key: 'averageCaseSize', header: 'Average Case Size' },
+      { key: 'numberOfCases', header: 'Number of Cases' },
+      { key: 'targetNewRecruits', header: 'Target New Recruits' },
+      { key: 'provisionForAttrition', header: 'Provision for Attrition' },
+      { key: 'targetCasesForMonth', header: 'Target Cases for Month' },
+      { key: 'targetCoded', header: 'Target No. Coded' },
+    ];
+    downloadSingleSheet('ACTION PLAN', columns, flatten(), 'Action Plan.xlsx');
+  }
+
+  async function doImport(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    try {
+      const wb = await readWorkbook(file);
+      const columns = [
+        { key: 'month', header: 'Month', aliases: ['Month'] },
+        { key: 'averageCaseSize', header: 'Average Case Size' },
+        { key: 'numberOfCases', header: 'Number of Cases' },
+        { key: 'targetNewRecruits', header: 'Target New Recruits' },
+        { key: 'provisionForAttrition', header: 'Provision for Attrition' },
+        { key: 'targetCasesForMonth', header: 'Target Cases for Month' },
+        { key: 'targetCoded', header: 'Target No. Coded' },
+      ];
+      const rows = parseSheetRows(wb, columns, 'ACTION PLAN');
+      let matched = 0;
+      rows.forEach((r) => {
+        const i = ap.months.findIndex((m) => m.toLowerCase() === String(r.month || '').toLowerCase());
+        if (i === -1) return;
+        matched++;
+        if (r.averageCaseSize !== null) ap.sales.averageCaseSize[i] = num(r.averageCaseSize);
+        if (r.numberOfCases !== null) ap.sales.numberOfCases[i] = num(r.numberOfCases);
+        if (r.targetNewRecruits !== null) ap.recruitment.targetNewRecruits[i] = num(r.targetNewRecruits);
+        if (r.provisionForAttrition !== null) ap.recruitment.provisionForAttrition[i] = num(r.provisionForAttrition);
+        if (r.targetCasesForMonth !== null) ap.salesActivity.targetCasesForMonth[i] = num(r.targetCasesForMonth);
+        if (r.targetCoded !== null) ap.recruitmentActivity.targetCoded[i] = num(r.targetCoded);
+      });
+      persist();
+      showToast(`Imported ${matched} month${matched === 1 ? '' : 's'} from Excel.`);
+    } catch (err) {
+      console.error(err);
+      showToast('Could not read that file.');
+    } finally {
+      e.target.value = '';
+    }
+  }
+
+  paint();
+}

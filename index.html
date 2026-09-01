@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>My PRU CRM</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📇</text></svg>" />
+<link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+
+<div id="app">
+  <header class="topbar">
+    <button id="navToggle" class="icon-btn" title="Menu" aria-label="Toggle menu">☰</button>
+    <div class="brand">
+      <span class="brand-emoji">📇</span>
+      <span class="brand-name" id="brandName">My CRM</span>
+    </div>
+    <div class="topbar-spacer"></div>
+
+    <div class="notif-wrap">
+      <button id="notifBell" class="icon-btn" title="Follow-up alerts" aria-label="Notifications">
+        🔔<span id="notifBadge" class="badge hidden">0</span>
+      </button>
+      <div id="notifPanel" class="notif-panel hidden">
+        <div class="notif-panel-header">
+          <strong>Follow-up alerts</strong>
+          <label class="notif-toggle" title="Ask the browser to also show desktop notifications">
+            <input type="checkbox" id="browserNotifToggle" /> Desktop alerts
+          </label>
+        </div>
+        <div id="notifList" class="notif-list"></div>
+      </div>
+    </div>
+
+    <button id="backupExportBtn" class="btn btn-ghost" title="Download a full backup (.xlsx) of every tab">⬇ Backup all</button>
+    <label class="btn btn-ghost" title="Restore every tab from a full backup .xlsx">
+      ⬆ Restore all
+      <input type="file" id="backupImportInput" accept=".xlsx,.xls" hidden />
+    </label>
+  </header>
+
+  <div class="body">
+    <nav id="sidebar" class="sidebar">
+      <ul id="tabNav" class="tab-nav">
+        <li><a href="#agape" data-tab="agape"><span class="tab-icon">🌱</span>AGAPE</a></li>
+        <li><a href="#action-plan" data-tab="action-plan"><span class="tab-icon">🗓️</span>Action Plan</a></li>
+        <li><a href="#selling-prospect-list" data-tab="selling-prospect-list"><span class="tab-icon">🧲</span>Selling Prospect List</a></li>
+        <li><a href="#recruit-prospect-list" data-tab="recruit-prospect-list"><span class="tab-icon">🧑‍🤝‍🧑</span>Recruit Prospect List</a></li>
+        <li><a href="#scorecard" data-tab="scorecard"><span class="tab-icon">🏆</span>Scorecard</a></li>
+        <li><a href="#product-knowledge" data-tab="product-knowledge"><span class="tab-icon">📦</span>Product Knowledge</a></li>
+        <li><a href="#selling" data-tab="selling"><span class="tab-icon">💼</span>Selling</a></li>
+        <li><a href="#recruitment" data-tab="recruitment"><span class="tab-icon">👥</span>Recruitment</a></li>
+        <li><a href="#sales-pipeline" data-tab="sales-pipeline"><span class="tab-icon">📈</span>Sales Pipeline</a></li>
+      </ul>
+      <div class="sidebar-footer">
+        <span id="saveStatus">All changes saved</span>
+      </div>
+    </nav>
+
+    <main id="mainContent" class="main-content">
+      <!-- active tab renders here -->
+    </main>
+  </div>
+</div>
+
+<div id="toast" class="toast hidden"></div>
+
+<script src="vendor/xlsx.full.min.js"></script>
+<script type="module" src="js/main.js"></script>
+</body>
+</html>

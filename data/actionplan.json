@@ -1,0 +1,320 @@
+{
+  "months": [
+    "JANUARY",
+    "FEBRUARY",
+    "MARCH",
+    "APRIL",
+    "MAY",
+    "JUNE",
+    "JULY",
+    "AUGUST",
+    "SEPTEMBER",
+    "OCTOBER",
+    "NOVEMBER",
+    "DECEMBER"
+  ],
+  "sales": {
+    "averageCaseSize": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "numberOfCases": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  "recruitment": {
+    "beginningManpowerJan": 0,
+    "targetNewRecruits": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "provisionForAttrition": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  "salesActivity": {
+    "targetCasesForMonth": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  "recruitmentActivity": {
+    "targetCoded": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  "successFormulaSales": "15 Prospects | 5 Appts | 3 Closed -- 5 Prospects | 2 Confirmed BYB | 50% Show-Up Rate | 20% Conversion Rate",
+  "weeklyCalendar": [
+    {
+      "week": 1,
+      "days": {
+        "MONDAY": [
+          {
+            "time": "17:00",
+            "activity": "Client Meeting"
+          },
+          {
+            "time": "19:00",
+            "activity": "Green Hour"
+          },
+          {
+            "time": "19:00",
+            "activity": "Unit BYB"
+          }
+        ],
+        "TUESDAY": [
+          {
+            "time": "19:00",
+            "activity": "Tuesday Sesh"
+          }
+        ],
+        "WEDNESDAY": [
+          {
+            "time": "19:00",
+            "activity": "Unit BYB"
+          },
+          {
+            "time": "21:00",
+            "activity": "Client Meeting"
+          }
+        ],
+        "THURSDAY": [
+          {
+            "time": "09:00",
+            "activity": "Green Hour"
+          },
+          {
+            "time": "19:00",
+            "activity": "Green Hour"
+          }
+        ],
+        "FRIDAY": [
+          {
+            "time": "19:00",
+            "activity": "Fine Tuning"
+          }
+        ],
+        "SATURDAY": [
+          {
+            "time": "10:00",
+            "activity": "Green Hour"
+          },
+          {
+            "time": "14:00",
+            "activity": "Unit Meeting"
+          },
+          {
+            "time": "17:00",
+            "activity": "Branch BYB"
+          }
+        ]
+      }
+    },
+    {
+      "week": 2,
+      "days": {
+        "MONDAY": [
+          {
+            "time": "19:00",
+            "activity": "Green Hour"
+          },
+          {
+            "time": "19:00",
+            "activity": "Unit BYB"
+          }
+        ],
+        "TUESDAY": [
+          {
+            "time": "09:00",
+            "activity": "A2 Day Huddle"
+          },
+          {
+            "time": "17:00",
+            "activity": "Client Meeting"
+          },
+          {
+            "time": "19:00",
+            "activity": "Tuesday Sesh"
+          }
+        ],
+        "WEDNESDAY": [
+          {
+            "time": "19:00",
+            "activity": "Unit BYB"
+          }
+        ],
+        "THURSDAY": [
+          {
+            "time": "09:00",
+            "activity": "Green Hour"
+          },
+          {
+            "time": "19:00",
+            "activity": "Sales Booster"
+          }
+        ],
+        "FRIDAY": [],
+        "SATURDAY": [
+          {
+            "time": "10:00",
+            "activity": "Branch Meeting"
+          },
+          {
+            "time": "17:00",
+            "activity": "Branch BYB"
+          }
+        ]
+      }
+    },
+    {
+      "week": 3,
+      "days": {
+        "MONDAY": [
+          {
+            "time": "19:00",
+            "activity": "Green Hour"
+          },
+          {
+            "time": "19:00",
+            "activity": "Unit BYB"
+          }
+        ],
+        "TUESDAY": [
+          {
+            "time": "09:00",
+            "activity": "A2 Day Huddle"
+          },
+          {
+            "time": "19:00",
+            "activity": "Tuesday Sesh"
+          }
+        ],
+        "WEDNESDAY": [
+          {
+            "time": "19:00",
+            "activity": "Unit BYB"
+          }
+        ],
+        "THURSDAY": [
+          {
+            "time": "09:00",
+            "activity": "Green Hour"
+          },
+          {
+            "time": "19:00",
+            "activity": "Sales Booster"
+          }
+        ],
+        "FRIDAY": [],
+        "SATURDAY": [
+          {
+            "time": "17:00",
+            "activity": "Branch BYB"
+          }
+        ]
+      }
+    },
+    {
+      "week": 4,
+      "days": {
+        "MONDAY": [],
+        "TUESDAY": [
+          {
+            "time": "09:00",
+            "activity": "A2 Day Huddle"
+          },
+          {
+            "time": "19:00",
+            "activity": "Tuesday Sesh"
+          }
+        ],
+        "WEDNESDAY": [
+          {
+            "time": "19:00",
+            "activity": "Unit BYB"
+          }
+        ],
+        "THURSDAY": [
+          {
+            "time": "09:00",
+            "activity": "Green Hour"
+          },
+          {
+            "time": "19:00",
+            "activity": "Green Hour"
+          }
+        ],
+        "FRIDAY": [],
+        "SATURDAY": [
+          {
+            "time": "17:00",
+            "activity": "Branch BYB"
+          }
+        ]
+      }
+    }
+  ]
+}

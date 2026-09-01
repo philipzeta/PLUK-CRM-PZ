@@ -1,0 +1,37 @@
+{
+  "sourceOptions": [
+    "WARM MARKET",
+    "WORK",
+    "ORGANIZATION",
+    "SCHOOLMATE",
+    "REFERRALS",
+    "COLD MARKET"
+  ],
+  "sourceLegend": [
+    {
+      "source": "SOURCE",
+      "description": "DESCRIPTION"
+    },
+    {
+      "source": "WARM MARKET",
+      "description": "- Relatives, Friends, etc."
+    },
+    {
+      "source": "WORK",
+      "description": "- Previous and present work"
+    },
+    {
+      "source": "ORGANIZATION",
+      "description": "- Church, clubs, etc."
+    },
+    {
+      "source": "SCHOOLMATE",
+      "description": "- Elementary, High School, College"
+    },
+    {
+      "source": "REFERRALS",
+      "description": "- Referred by someone else"
+    }
+  ],
+  "rows": []
+}

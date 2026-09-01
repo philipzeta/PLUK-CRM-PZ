@@ -1,0 +1,212 @@
+{
+  "instruction": "Fill in the yellow cells only",
+  "sections": [
+    {
+      "id": "living",
+      "title": "A. BUDGET FOR MY LIVING EXPENSES",
+      "groups": [
+        {
+          "title": "HOUSEHOLD EXPENSES",
+          "items": [
+            {
+              "label": "Rent or mortgage, MRI, assoc. dues, real estate tax",
+              "amount": 0
+            },
+            {
+              "label": "Utilities (i.e., water, electricity, phone, internet, cable, LPG, etc.)",
+              "amount": 0
+            },
+            {
+              "label": "Wages for household help and etc.",
+              "amount": 0
+            },
+            {
+              "label": "Vehicle maintenance expenses, car expenses, car insurance, amortization",
+              "amount": 0
+            },
+            {
+              "label": "Non-life/general home insurance",
+              "amount": 0
+            },
+            {
+              "label": "Others",
+              "amount": 0
+            }
+          ]
+        },
+        {
+          "title": "PERSONAL AND FAMILY EXPENSES",
+          "items": [
+            {
+              "label": "Food",
+              "amount": 0
+            },
+            {
+              "label": "Transportation - Gas / Commute fare",
+              "amount": 0
+            },
+            {
+              "label": "Doctor, dentist, medicines",
+              "amount": 0
+            },
+            {
+              "label": "Personal allowance (Vices/Work)",
+              "amount": 0
+            },
+            {
+              "label": "Others - Loans",
+              "amount": 0
+            }
+          ]
+        },
+        {
+          "title": "EDUCATIONAL EXPENSES",
+          "items": [
+            {
+              "label": "Tuition and miscellaneous fees",
+              "amount": 0
+            },
+            {
+              "label": "Books and school supplies",
+              "amount": 0
+            },
+            {
+              "label": "Children's allowance, transporation (school bus)",
+              "amount": 0
+            },
+            {
+              "label": "Others",
+              "amount": 0
+            }
+          ]
+        },
+        {
+          "title": "LUXURY / WANTS",
+          "items": [
+            {
+              "label": "Weekend recreation",
+              "amount": 0
+            },
+            {
+              "label": "Vacation",
+              "amount": 0
+            },
+            {
+              "label": "Gifts, shopping spree",
+              "amount": 0
+            },
+            {
+              "label": "Club membership, gym, etc.",
+              "amount": 0
+            },
+            {
+              "label": "Others",
+              "amount": 0
+            }
+          ]
+        },
+        {
+          "title": "MISCELLANEOUS EXPENSES",
+          "items": [
+            {
+              "label": "Income and community taxes",
+              "amount": 0
+            },
+            {
+              "label": "Tithes and love offerings, charities, donations, etc.",
+              "amount": 0
+            },
+            {
+              "label": "FAMILY SUPPORT",
+              "amount": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "business",
+      "title": "B. BUDGET FOR BUSINESS EXPENSE",
+      "groups": [
+        {
+          "title": "PRU LIFE U.K. BUSINESS OPERATING EXPENSES",
+          "items": [
+            {
+              "label": "Provision for Meeting (Transpo + Accomm)",
+              "amount": 0
+            },
+            {
+              "label": "Provision for Tokens",
+              "amount": 0
+            },
+            {
+              "label": "Provision for Recruitment",
+              "amount": 0
+            },
+            {
+              "label": "Provision for Special Events & Training Subsidy (Rise Up, BBCON)",
+              "amount": 0
+            },
+            {
+              "label": "Provision for tools",
+              "amount": 0
+            },
+            {
+              "label": "Provision for Miscellaneous & Other Contingencies",
+              "amount": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "savings",
+      "title": "C. MONEY SET ASIDE FOR SAVINGS AND INVESTMENT - GOALS",
+      "groups": [
+        {
+          "title": "SAVINGS & INVESTMENT",
+          "items": [
+            {
+              "label": "Life insurance- Personal",
+              "amount": 0
+            },
+            {
+              "label": "Life insurance- Family",
+              "amount": 0
+            },
+            {
+              "label": "Regular savings account",
+              "amount": 0
+            },
+            {
+              "label": "Investments (stocks, bonds, mutual funds, etc.)",
+              "amount": 0
+            },
+            {
+              "label": "Emergency fund (at least 3x of your monthly EXPENSES)",
+              "amount": 0
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "goals": [],
+  "ftJobItems": [
+    {
+      "label": "",
+      "amount": 0
+    },
+    {
+      "label": "",
+      "amount": 0
+    },
+    {
+      "label": "",
+      "amount": 0
+    }
+  ],
+  "incomeFromEmployment": 0,
+  "avgFirstYearCommission": 0.3,
+  "avgApePerCase": 36000
+}

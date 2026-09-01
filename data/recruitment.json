@@ -1,0 +1,37 @@
+{
+  "responseOptions": [
+    "Reserved",
+    "Approached no reply",
+    "Approached with reply",
+    "Elbow",
+    "For Appointment",
+    "CLIENT",
+    "-"
+  ],
+  "sourceOptions": [
+    "Facebook Main",
+    "Facebook Ads",
+    "Facebook Second Account",
+    "Facebook - Mother",
+    "Linked-in",
+    "Financial Seminar/Booth",
+    "Tiktok",
+    "PruLeads",
+    "Referrals",
+    "Career Talk"
+  ],
+  "demographicOptions": [
+    "FRIEND",
+    "FAMILY/RELATIVE",
+    "REFERRAL",
+    "RESELL",
+    "WORKMATE",
+    "ACQUAINTANCE",
+    "SOCIAL MEDIA FRIEND",
+    "CHURCHMATE",
+    "SCHOOLMATE",
+    "CHILD HOOD/NEIGHBORHOOD",
+    "PRULIFE LEADS"
+  ],
+  "rows": []
+}

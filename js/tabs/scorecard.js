@@ -1,0 +1,204 @@
+import { loadTab, markDirty } from '../store.js';
+import { num, fmtMoney, uid, escapeHtml } from '../utils.js';
+import { downloadSingleSheet, readWorkbook, parseSheetRows } from '../excel.js';
+import { showToast } from '../utils.js';
+
+function computeTripApe(trip, monthlyApe) {
+  if (Array.isArray(trip.apeFypRange)) {
+    const [s, e] = trip.apeFypRange;
+    return monthlyApe.slice(s, e + 1).reduce((a, b) => a + num(b), 0);
+  }
+  if (trip.apeFypRange === 'total') return monthlyApe.reduce((a, b) => a + num(b), 0);
+  return null;
+}
+
+export async function render(container) {
+  const d = await loadTab('scorecard');
+  d.achieversClub.forEach((r) => { if (!r._id) r._id = uid(); });
+  d.tripQualifications.forEach((r) => { if (!r._id) r._id = uid(); });
+
+  function paint() {
+    const totalApe = d.monthlyApe.reduce((a, b) => a + num(b), 0);
+    const totalCc = d.monthlyCc.reduce((a, b) => a + num(b), 0);
+
+    container.innerHTML = `
+      <div class="tab-header">
+        <div>
+          <h1 class="tab-title">🏆 Personal Scorecard</h1>
+          <p class="tab-subtitle">Achiever's Club, trip qualifications and QPB — targets and reward text stay as your leaders set them; "TO GO" and reward figures recompute live from your monthly APE & case count.</p>
+        </div>
+        <div class="tab-actions">
+          <button class="btn btn-light" id="exportBtn">⬇ Export to Excel</button>
+          <label class="btn btn-light">⬆ Import from Excel<input type="file" id="importInput" accept=".xlsx,.xls" hidden /></label>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Monthly APE & case count <span class="text-muted" style="font-weight:400">— ${escapeHtml(d.asOf)}</span></h3>
+        <div class="dg-scroll" style="max-height:none">
+          <table class="dg-table">
+            <thead><tr><th style="position:sticky;left:0;background:#faf7fb">Month</th>${d.months.map((m) => `<th class="num">${m.slice(0,3)}</th>`).join('')}<th class="num">Total</th></tr></thead>
+            <tbody>
+              <tr><td style="position:sticky;left:0;background:#fff">APE</td>${d.monthlyApe.map((v, i) => `<td class="num"><input class="cell-input" type="number" step="any" data-arr="monthlyApe" data-i="${i}" value="${v ?? 0}" style="width:78px;text-align:right" /></td>`).join('')}<td class="num" style="font-weight:700">₱ ${fmtMoney(totalApe)}</td></tr>
+              <tr><td style="position:sticky;left:0;background:#fff">Case count</td>${d.monthlyCc.map((v, i) => `<td class="num"><input class="cell-input" type="number" step="any" data-arr="monthlyCc" data-i="${i}" value="${v ?? 0}" style="width:78px;text-align:right" /></td>`).join('')}<td class="num" style="font-weight:700">${totalCc}</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Achiever's Club 2026</h3>
+        <table class="dg-table" style="width:100%">
+          <thead><tr><th>Goal</th><th class="num" style="width:130px">Target</th><th>Reward</th><th style="width:110px">Period</th><th class="num" style="width:120px">To go</th><th style="width:34px"></th></tr></thead>
+          <tbody id="achieversBody">
+            ${d.achieversClub.map((r) => `
+              <tr data-id="${r._id}">
+                <td><input class="cell-input" type="text" data-f="goal" value="${escapeHtml(r.goal)}" /></td>
+                <td class="num"><input class="cell-input" type="number" data-f="target" value="${r.target ?? 0}" style="text-align:right" /></td>
+                <td><input class="cell-input" type="text" data-f="reward" value="${escapeHtml(r.reward || '')}" /></td>
+                <td><input class="cell-input" type="text" data-f="period" value="${escapeHtml(r.period || '')}" /></td>
+                <td class="num">₱ ${fmtMoney(num(r.target) - totalApe)}</td>
+                <td><button class="dg-del-btn ach-del">✕</button></td>
+              </tr>`).join('')}
+          </tbody>
+        </table>
+        <button class="btn btn-light btn-sm" id="addAchiever" style="margin-top:8px;">+ Add goal</button>
+
+        <h4>Rookie Producers Bonus</h4>
+        <p class="text-muted" style="font-size:12.5px">${d.rookieProducersBonus.tiers.map(escapeHtml).join('<br>')}</p>
+        <label class="text-muted">Reward per case count</label>
+        <input type="number" id="rewardPerCase" value="${d.rookieProducersBonus.rewardPerCase ?? 0}" style="max-width:160px" />
+      </div>
+
+      <div class="card">
+        <h3>Trip Qualifications 2026</h3>
+        <table class="dg-table" style="width:100%">
+          <thead><tr><th>Trip</th><th style="width:160px">Target</th><th>Reward</th><th class="num" style="width:120px">APE / FYP</th><th style="width:34px"></th></tr></thead>
+          <tbody id="tripsBody">
+            ${d.tripQualifications.map((r) => {
+              const ape = computeTripApe(r, d.monthlyApe);
+              return `
+              <tr data-id="${r._id}">
+                <td><input class="cell-input" type="text" data-f="trip" value="${escapeHtml(r.trip)}" /></td>
+                <td><input class="cell-input" type="text" data-f="target" value="${escapeHtml(r.target ?? '')}" /></td>
+                <td><input class="cell-input" type="text" data-f="reward" value="${escapeHtml(r.reward || '')}" /></td>
+                <td class="num">${ape === null ? '<span class="text-muted">—</span>' : '₱ ' + fmtMoney(ape)}</td>
+                <td><button class="dg-del-btn trip-del">✕</button></td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+        <button class="btn btn-light btn-sm" id="addTrip" style="margin-top:8px;">+ Add trip</button>
+      </div>
+
+      <div class="card">
+        <h3>QPB 2026</h3>
+        <p class="section-note">Reward figures here are planning estimates recomputed from "FYP for quarter" × tier % — treat them as a guide, not a guaranteed payout.</p>
+        ${d.qpb.quarters.map((q) => {
+          const qApe = q.monthIdx.reduce((s, mi) => s + num(d.monthlyApe[mi]), 0);
+          return `
+          <h4>${escapeHtml(q.label)} <span class="text-muted" style="font-weight:400">— APE so far: ₱ ${fmtMoney(qApe)}</span></h4>
+          <div style="max-width:220px;margin-bottom:8px;">
+            <label class="text-muted">FYP for quarter</label>
+            <input type="number" class="qpb-fyp" data-q="${q.label}" value="${q.fypForQuarter ?? 0}" />
+          </div>
+          <table class="dg-table" style="width:100%;margin-bottom:14px;">
+            <thead><tr><th class="num" style="width:140px">Target</th><th class="num" style="width:80px">%</th><th class="num" style="width:130px">To go</th><th class="num" style="width:130px">Reward</th></tr></thead>
+            <tbody>
+              ${q.tiers.map((t, ti) => `
+                <tr>
+                  <td class="num"><input class="cell-input qpb-target" data-q="${q.label}" data-ti="${ti}" type="number" value="${t.target}" style="text-align:right" /></td>
+                  <td class="num"><input class="cell-input qpb-pct" data-q="${q.label}" data-ti="${ti}" type="number" step="0.01" value="${t.percent}" style="text-align:right" /></td>
+                  <td class="num">₱ ${fmtMoney(t.target - qApe)}</td>
+                  <td class="num">₱ ${fmtMoney((num(q.fypForQuarter)) * num(t.percent))}</td>
+                </tr>`).join('')}
+            </tbody>
+          </table>`;
+        }).join('')}
+      </div>
+    `;
+    wire();
+  }
+
+  function persist() { markDirty('scorecard'); paint(); }
+
+  function wire() {
+    container.querySelectorAll('[data-arr]').forEach((input) => {
+      input.addEventListener('input', () => { d[input.dataset.arr][+input.dataset.i] = num(input.value); persist(); });
+    });
+    container.querySelectorAll('#achieversBody tr').forEach((tr) => {
+      const r = d.achieversClub.find((x) => x._id === tr.dataset.id);
+      tr.querySelectorAll('[data-f]').forEach((inp) => {
+        inp.addEventListener('input', () => { r[inp.dataset.f] = inp.type === 'number' ? num(inp.value) : inp.value; persist(); });
+      });
+      tr.querySelector('.ach-del').addEventListener('click', () => { d.achieversClub.splice(d.achieversClub.indexOf(r), 1); persist(); });
+    });
+    const addAch = container.querySelector('#addAchiever');
+    if (addAch) addAch.addEventListener('click', () => { d.achieversClub.push({ _id: uid(), goal: '', target: 0, reward: '', period: '' }); persist(); });
+
+    container.querySelector('#rewardPerCase').addEventListener('input', (e) => { d.rookieProducersBonus.rewardPerCase = num(e.target.value); persist(); });
+
+    container.querySelectorAll('#tripsBody tr').forEach((tr) => {
+      const r = d.tripQualifications.find((x) => x._id === tr.dataset.id);
+      tr.querySelectorAll('[data-f]').forEach((inp) => {
+        inp.addEventListener('input', () => { r[inp.dataset.f] = inp.value; persist(); });
+      });
+      tr.querySelector('.trip-del').addEventListener('click', () => { d.tripQualifications.splice(d.tripQualifications.indexOf(r), 1); persist(); });
+    });
+    const addTrip = container.querySelector('#addTrip');
+    if (addTrip) addTrip.addEventListener('click', () => { d.tripQualifications.push({ _id: uid(), trip: '', target: '', reward: '', apeFypRange: null }); persist(); });
+
+    container.querySelectorAll('.qpb-fyp').forEach((inp) => {
+      inp.addEventListener('input', () => {
+        const q = d.qpb.quarters.find((x) => x.label === inp.dataset.q);
+        q.fypForQuarter = num(inp.value);
+        persist();
+      });
+    });
+    container.querySelectorAll('.qpb-target, .qpb-pct').forEach((inp) => {
+      inp.addEventListener('input', () => {
+        const q = d.qpb.quarters.find((x) => x.label === inp.dataset.q);
+        const t = q.tiers[+inp.dataset.ti];
+        if (inp.classList.contains('qpb-target')) t.target = num(inp.value);
+        else t.percent = num(inp.value);
+        persist();
+      });
+    });
+
+    container.querySelector('#exportBtn').addEventListener('click', doExport);
+    container.querySelector('#importInput').addEventListener('change', doImport);
+  }
+
+  function doExport() {
+    const columns = [{ key: 'month', header: 'Month' }, { key: 'ape', header: 'APE' }, { key: 'cc', header: 'Case Count' }];
+    const rows = d.months.map((m, i) => ({ month: m, ape: num(d.monthlyApe[i]), cc: num(d.monthlyCc[i]) }));
+    downloadSingleSheet('SCORECARD', columns, rows, 'Scorecard.xlsx');
+  }
+
+  async function doImport(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    try {
+      const wb = await readWorkbook(file);
+      const columns = [{ key: 'month', header: 'Month', aliases: ['Month'] }, { key: 'ape', header: 'APE' }, { key: 'cc', header: 'Case Count' }];
+      const rows = parseSheetRows(wb, columns, 'SCORECARD');
+      let matched = 0;
+      rows.forEach((r) => {
+        const i = d.months.findIndex((m) => m.toLowerCase() === String(r.month || '').toLowerCase());
+        if (i === -1) return;
+        matched++;
+        if (r.ape !== null) d.monthlyApe[i] = num(r.ape);
+        if (r.cc !== null) d.monthlyCc[i] = num(r.cc);
+      });
+      persist();
+      showToast(`Imported ${matched} month${matched === 1 ? '' : 's'} from Excel.`);
+    } catch (err) {
+      console.error(err);
+      showToast('Could not read that file.');
+    } finally {
+      e.target.value = '';
+    }
+  }
+
+  paint();
+}

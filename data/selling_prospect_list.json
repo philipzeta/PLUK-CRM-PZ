@@ -1,0 +1,18 @@
+{
+  "levels": [
+    "Prospecting",
+    "Engagement & Approaching",
+    "Set Appointment",
+    "Client Meeting",
+    "Closing & Referrals",
+    "Servicing"
+  ],
+  "board": {
+    "Prospecting": [],
+    "Engagement & Approaching": [],
+    "Set Appointment": [],
+    "Client Meeting": [],
+    "Closing & Referrals": [],
+    "Servicing": []
+  }
+}

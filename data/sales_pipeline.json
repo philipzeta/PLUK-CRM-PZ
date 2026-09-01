@@ -1,0 +1,55 @@
+{
+  "months": [
+    {
+      "key": "2026-09",
+      "label": "SEPTEMBER 2026",
+      "activities": [
+        {
+          "name": "APPROACH",
+          "target": 0,
+          "weeks": [
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "APP SET",
+          "target": 0,
+          "weeks": [
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "PRESENTATION",
+          "target": 0,
+          "weeks": [
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "SUBMITTED CASE",
+          "target": 0,
+          "weeks": [
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        }
+      ],
+      "pipeline": []
+    }
+  ]
+}
