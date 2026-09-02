@@ -1,24 +1,25 @@
 import { loadTab, markDirty } from '../store.js';
-import { num, fmtMoney, fmtInt, escapeHtml } from '../utils.js';
+import { num, fmtMoney, fmtInt, escapeHtml, showToast, withScrollPreserved } from '../utils.js';
 import { computeAgape, computeActionPlan } from '../formulas.js';
 import { downloadSingleSheet, readWorkbook, parseSheetRows } from '../excel.js';
-import { showToast } from '../utils.js';
 
 function editableMonthRow(label, values, key, onChange, opts = {}) {
   const cells = values.map((v, i) => `<td class="num"><input class="cell-input" type="number" step="any" data-i="${i}" data-key="${key}" value="${v ?? 0}" style="width:82px;text-align:right" /></td>`).join('');
   return `<tr><td>${escapeHtml(label)}</td>${cells}</tr>`;
 }
 
-function readonlyMonthRow(label, values, fmt = fmtMoney) {
-  const cells = values.map((v) => `<td class="num">${fmt(v)}</td>`).join('');
-  return `<tr><td>${escapeHtml(label)}</td>${cells}</tr>`;
+function readonlyMonthRow(label, values, rowId, fmt = fmtMoney) {
+  const cells = values.map((v, i) => `<td class="num" data-i="${i}">${fmt(v)}</td>`).join('');
+  return `<tr data-row="${rowId}"><td>${escapeHtml(label)}</td>${cells}</tr>`;
 }
 
 export async function render(container) {
   const agape = await loadTab('agape');
   const ap = await loadTab('action-plan');
 
-  function paint() {
+  function paint() { withScrollPreserved(container, paintInner); }
+
+  function paintInner() {
     const ac = computeAgape(agape);
     const c = computeActionPlan(ap, ac.annualPremiumTarget);
     const months = ap.months;
@@ -41,12 +42,12 @@ export async function render(container) {
         <div class="dg-scroll" style="max-height:none">
           <table class="dg-table"><thead><tr><th style="position:sticky;left:0;background:#faf7fb">Metric</th>${monthHead}</tr></thead>
           <tbody id="salesRows">
-            ${readonlyMonthRow('Target APE', c.targetApe)}
+            ${readonlyMonthRow('Target APE', c.targetApe, 'targetApe')}
             ${editableMonthRow('Average case size', ap.sales.averageCaseSize, 'averageCaseSize')}
             ${editableMonthRow('Number of cases', ap.sales.numberOfCases, 'numberOfCases')}
-            ${readonlyMonthRow('Actual APE', c.actualApe)}
-            ${readonlyMonthRow('Excess / Lacking', c.excess)}
-            ${readonlyMonthRow('Income (35%)', c.income)}
+            ${readonlyMonthRow('Actual APE', c.actualApe, 'actualApe')}
+            ${readonlyMonthRow('Excess / Lacking', c.excess, 'excess')}
+            ${readonlyMonthRow('Income (35%)', c.income, 'income')}
           </tbody></table>
         </div>
       </div>
@@ -60,10 +61,10 @@ export async function render(container) {
         <div class="dg-scroll" style="max-height:none">
           <table class="dg-table"><thead><tr><th style="position:sticky;left:0;background:#faf7fb">Metric</th>${monthHead}</tr></thead>
           <tbody id="recruitRows">
-            ${readonlyMonthRow('Beginning manpower', c.beginMP, fmtInt)}
+            ${readonlyMonthRow('Beginning manpower', c.beginMP, 'beginMP', fmtInt)}
             ${editableMonthRow('Target new recruits', ap.recruitment.targetNewRecruits, 'targetNewRecruits')}
             ${editableMonthRow('Provision for attrition', ap.recruitment.provisionForAttrition, 'provisionForAttrition')}
-            ${readonlyMonthRow('Ending manpower', c.endMP, fmtInt)}
+            ${readonlyMonthRow('Ending manpower', c.endMP, 'endMP', fmtInt)}
           </tbody></table>
         </div>
       </div>
@@ -75,9 +76,9 @@ export async function render(container) {
           <table class="dg-table"><thead><tr><th style="position:sticky;left:0;background:#faf7fb">Metric</th>${monthHead}</tr></thead>
           <tbody id="salesActRows">
             ${editableMonthRow('Target cases for the month', ap.salesActivity.targetCasesForMonth, 'targetCasesForMonth')}
-            ${readonlyMonthRow('No. of prospects (×15)', c.prospects15, fmtInt)}
-            ${readonlyMonthRow('No. of appointments (×5)', c.appts5, fmtInt)}
-            ${readonlyMonthRow('No. of client meetings (×3)', c.meetings3, fmtInt)}
+            ${readonlyMonthRow('No. of prospects (×15)', c.prospects15, 'prospects15', fmtInt)}
+            ${readonlyMonthRow('No. of appointments (×5)', c.appts5, 'appts5', fmtInt)}
+            ${readonlyMonthRow('No. of client meetings (×3)', c.meetings3, 'meetings3', fmtInt)}
           </tbody></table>
         </div>
 
@@ -86,9 +87,9 @@ export async function render(container) {
           <table class="dg-table"><thead><tr><th style="position:sticky;left:0;background:#faf7fb">Metric</th>${monthHead}</tr></thead>
           <tbody id="recruitActRows">
             ${editableMonthRow('Target no. of coded (20% conversion)', ap.recruitmentActivity.targetCoded, 'targetCoded')}
-            ${readonlyMonthRow('No. BYB show-ups (50% show-up)', c.showUps, fmtInt)}
-            ${readonlyMonthRow('No. of confirmed BYB guests', c.confirmedBYB, fmtInt)}
-            ${readonlyMonthRow('No. of prospects', c.recProspects, fmtInt)}
+            ${readonlyMonthRow('No. BYB show-ups (50% show-up)', c.showUps, 'showUps', fmtInt)}
+            ${readonlyMonthRow('No. of confirmed BYB guests', c.confirmedBYB, 'confirmedBYB', fmtInt)}
+            ${readonlyMonthRow('No. of prospects', c.recProspects, 'recProspects', fmtInt)}
           </tbody></table>
         </div>
       </div>
@@ -136,7 +137,32 @@ export async function render(container) {
     });
   }
 
+  // Structural (none currently needed here, kept for parity/future use + import/restore).
   function persist() { markDirty('action-plan'); paint(); }
+
+  // Recompute and patch only the readonly computed cells — no input elements
+  // are touched, so typing keeps focus/cursor/scroll intact.
+  function updateComputed() {
+    const ac = computeAgape(agape);
+    const c = computeActionPlan(ap, ac.annualPremiumTarget);
+    const patchRow = (rowId, values, fmt = fmtMoney) => {
+      const tr = container.querySelector(`tr[data-row="${rowId}"]`);
+      if (!tr) return;
+      tr.querySelectorAll('td[data-i]').forEach((td) => { td.textContent = fmt(values[+td.dataset.i]); });
+    };
+    patchRow('targetApe', c.targetApe);
+    patchRow('actualApe', c.actualApe);
+    patchRow('excess', c.excess);
+    patchRow('income', c.income);
+    patchRow('beginMP', c.beginMP, fmtInt);
+    patchRow('endMP', c.endMP, fmtInt);
+    patchRow('prospects15', c.prospects15, fmtInt);
+    patchRow('appts5', c.appts5, fmtInt);
+    patchRow('meetings3', c.meetings3, fmtInt);
+    patchRow('showUps', c.showUps, fmtInt);
+    patchRow('confirmedBYB', c.confirmedBYB, fmtInt);
+    patchRow('recProspects', c.recProspects, fmtInt);
+  }
 
   function wire() {
     container.querySelectorAll('#salesRows input, #recruitRows input, #salesActRows input, #recruitActRows input').forEach((input) => {
@@ -146,10 +172,15 @@ export async function render(container) {
         else if (key in ap.recruitment) ap.recruitment[key][i] = v;
         else if (key in ap.salesActivity) ap.salesActivity[key][i] = v;
         else if (key in ap.recruitmentActivity) ap.recruitmentActivity[key][i] = v;
-        persist();
+        markDirty('action-plan');
+        updateComputed();
       });
     });
-    container.querySelector('#beginMP').addEventListener('input', (e) => { ap.recruitment.beginningManpowerJan = num(e.target.value); persist(); });
+    container.querySelector('#beginMP').addEventListener('input', (e) => {
+      ap.recruitment.beginningManpowerJan = num(e.target.value);
+      markDirty('action-plan');
+      updateComputed();
+    });
     container.querySelector('#exportBtn').addEventListener('click', doExport);
     container.querySelector('#importInput').addEventListener('change', doImport);
   }

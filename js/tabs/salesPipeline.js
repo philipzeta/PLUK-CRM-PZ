@@ -1,8 +1,7 @@
 import { loadTab, markDirty } from '../store.js';
-import { uid, num, fmtMoney, fmtPercent, escapeHtml, toISODate } from '../utils.js';
+import { uid, num, fmtMoney, fmtPercent, escapeHtml, toISODate, showToast, withScrollPreserved } from '../utils.js';
 import { createDataGrid } from '../datagrid.js';
 import { downloadWorkbook, readWorkbook, parseSheetRows } from '../excel.js';
-import { showToast } from '../utils.js';
 
 const ACT_COLUMNS = [
   { key: 'activity', header: 'Activity', aliases: ['Activity', 'ACTIVITY'] },
@@ -32,7 +31,9 @@ export async function render(container) {
 
   function persist() { markDirty('sales-pipeline'); }
 
-  function paint() {
+  function paint() { withScrollPreserved(container, paintInner); }
+
+  function paintInner() {
     const m = activeMonth();
     container.innerHTML = `
       <div class="tab-header">
@@ -70,7 +71,7 @@ export async function render(container) {
             <div><input class="cell-input act-name" data-id="${a._id}" type="text" value="${escapeHtml(a.name)}" /></div>
             <div><input class="cell-input act-f" data-id="${a._id}" data-f="target" type="number" value="${a.target ?? 0}" /></div>
             ${a.weeks.map((w, wi) => `<div><input class="cell-input act-week" data-id="${a._id}" data-wi="${wi}" type="number" value="${w ?? 0}" /></div>`).join('')}
-            <div class="text-muted">${total} / ${toGo}</div>
+            <div class="text-muted act-total" data-id="${a._id}">${total} / ${toGo}</div>
             `;
           }).join('')}
         </div>
@@ -158,14 +159,29 @@ export async function render(container) {
       persist(); paint();
     });
 
+    const updateActTotal = (a) => {
+      const cell = container.querySelector(`.act-total[data-id="${a._id}"]`);
+      if (!cell) return;
+      const total = a.weeks.reduce((s, v) => s + num(v), 0);
+      cell.textContent = `${total} / ${num(a.target) - total}`;
+    };
+
     container.querySelectorAll('.act-name').forEach((inp) => {
       inp.addEventListener('input', () => { m.activities.find((a) => a._id === inp.dataset.id).name = inp.value; persist(); });
     });
     container.querySelectorAll('.act-f').forEach((inp) => {
-      inp.addEventListener('input', () => { m.activities.find((a) => a._id === inp.dataset.id)[inp.dataset.f] = num(inp.value); persist(); });
+      inp.addEventListener('input', () => {
+        const a = m.activities.find((a) => a._id === inp.dataset.id);
+        a[inp.dataset.f] = num(inp.value);
+        persist(); updateActTotal(a);
+      });
     });
     container.querySelectorAll('.act-week').forEach((inp) => {
-      inp.addEventListener('input', () => { m.activities.find((a) => a._id === inp.dataset.id).weeks[+inp.dataset.wi] = num(inp.value); persist(); });
+      inp.addEventListener('input', () => {
+        const a = m.activities.find((a) => a._id === inp.dataset.id);
+        a.weeks[+inp.dataset.wi] = num(inp.value);
+        persist(); updateActTotal(a);
+      });
     });
 
     container.querySelector('#exportMonthBtn').addEventListener('click', () => exportMonth(m));

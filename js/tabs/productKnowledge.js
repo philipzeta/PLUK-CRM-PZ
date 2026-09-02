@@ -1,13 +1,14 @@
 import { loadTab, markDirty } from '../store.js';
-import { uid, escapeHtml } from '../utils.js';
+import { uid, escapeHtml, showToast, withScrollPreserved } from '../utils.js';
 import { downloadSingleSheet, readWorkbook, parseSheetRows } from '../excel.js';
-import { showToast } from '../utils.js';
 
 export async function render(container) {
   const d = await loadTab('product-knowledge');
   d.categories.forEach((cat) => { if (!cat._id) cat._id = uid(); cat.products.forEach((p) => { if (!p._id) p._id = uid(); }); });
 
-  function paint() {
+  function paint() { withScrollPreserved(container, paintInner); }
+
+  function paintInner() {
     const allRatings = d.categories.flatMap((c) => c.products.map((p) => p.rating).filter((r) => r));
     const avg = allRatings.length ? (allRatings.reduce((a, b) => a + b, 0) / allRatings.length).toFixed(1) : '—';
 

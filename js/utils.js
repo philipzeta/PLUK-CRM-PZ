@@ -1,3 +1,16 @@
+// Runs fn() (which typically replaces innerHTML) while preserving the
+// scroll position of `el` — innerHTML replacement otherwise resets scrollTop
+// to 0, which reads as "jumping back to the top of the page" after any edit.
+export function withScrollPreserved(el, fn) {
+  const top = el ? el.scrollTop : 0;
+  const result = fn();
+  if (el) {
+    el.scrollTop = top;
+    requestAnimationFrame(() => { el.scrollTop = top; });
+  }
+  return result;
+}
+
 export function uid() {
   return 'r' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 }

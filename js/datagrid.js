@@ -48,6 +48,8 @@ export function createDataGrid(opts) {
   }
 
   function render() {
+    const prevScroll = container.querySelector('.dg-scroll');
+    const prevScrollTop = prevScroll ? prevScroll.scrollTop : 0;
     const all = filteredRows();
     const totalPages = Math.max(1, Math.ceil(all.length / pageSize));
     page = Math.min(page, totalPages - 1);
@@ -117,6 +119,9 @@ export function createDataGrid(opts) {
         <button class="dg-next" ${page >= totalPages - 1 ? 'disabled' : ''}>Next ›</button>
       </div>
     `;
+
+    const newScroll = container.querySelector('.dg-scroll');
+    if (newScroll && prevScrollTop) newScroll.scrollTop = prevScrollTop;
 
     wireEvents();
   }

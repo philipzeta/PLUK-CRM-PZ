@@ -1,7 +1,6 @@
 import { loadTab, markDirty } from '../store.js';
-import { num, fmtMoney, uid, escapeHtml } from '../utils.js';
+import { num, fmtMoney, uid, escapeHtml, showToast, withScrollPreserved } from '../utils.js';
 import { downloadSingleSheet, readWorkbook, parseSheetRows } from '../excel.js';
-import { showToast } from '../utils.js';
 
 function computeTripApe(trip, monthlyApe) {
   if (Array.isArray(trip.apeFypRange)) {
@@ -17,7 +16,9 @@ export async function render(container) {
   d.achieversClub.forEach((r) => { if (!r._id) r._id = uid(); });
   d.tripQualifications.forEach((r) => { if (!r._id) r._id = uid(); });
 
-  function paint() {
+  function paint() { withScrollPreserved(container, paintInner); }
+
+  function paintInner() {
     const totalApe = d.monthlyApe.reduce((a, b) => a + num(b), 0);
     const totalCc = d.monthlyCc.reduce((a, b) => a + num(b), 0);
 
@@ -39,8 +40,8 @@ export async function render(container) {
           <table class="dg-table">
             <thead><tr><th style="position:sticky;left:0;background:#faf7fb">Month</th>${d.months.map((m) => `<th class="num">${m.slice(0,3)}</th>`).join('')}<th class="num">Total</th></tr></thead>
             <tbody>
-              <tr><td style="position:sticky;left:0;background:#fff">APE</td>${d.monthlyApe.map((v, i) => `<td class="num"><input class="cell-input" type="number" step="any" data-arr="monthlyApe" data-i="${i}" value="${v ?? 0}" style="width:78px;text-align:right" /></td>`).join('')}<td class="num" style="font-weight:700">₱ ${fmtMoney(totalApe)}</td></tr>
-              <tr><td style="position:sticky;left:0;background:#fff">Case count</td>${d.monthlyCc.map((v, i) => `<td class="num"><input class="cell-input" type="number" step="any" data-arr="monthlyCc" data-i="${i}" value="${v ?? 0}" style="width:78px;text-align:right" /></td>`).join('')}<td class="num" style="font-weight:700">${totalCc}</td></tr>
+              <tr><td style="position:sticky;left:0;background:#fff">APE</td>${d.monthlyApe.map((v, i) => `<td class="num"><input class="cell-input" type="number" step="any" data-arr="monthlyApe" data-i="${i}" value="${v ?? 0}" style="width:78px;text-align:right" /></td>`).join('')}<td class="num" id="apeTotalCell" style="font-weight:700">₱ ${fmtMoney(totalApe)}</td></tr>
+              <tr><td style="position:sticky;left:0;background:#fff">Case count</td>${d.monthlyCc.map((v, i) => `<td class="num"><input class="cell-input" type="number" step="any" data-arr="monthlyCc" data-i="${i}" value="${v ?? 0}" style="width:78px;text-align:right" /></td>`).join('')}<td class="num" id="ccTotalCell" style="font-weight:700">${totalCc}</td></tr>
             </tbody>
           </table>
         </div>
@@ -57,7 +58,7 @@ export async function render(container) {
                 <td class="num"><input class="cell-input" type="number" data-f="target" value="${r.target ?? 0}" style="text-align:right" /></td>
                 <td><input class="cell-input" type="text" data-f="reward" value="${escapeHtml(r.reward || '')}" /></td>
                 <td><input class="cell-input" type="text" data-f="period" value="${escapeHtml(r.period || '')}" /></td>
-                <td class="num">₱ ${fmtMoney(num(r.target) - totalApe)}</td>
+                <td class="num ach-togo">₱ ${fmtMoney(num(r.target) - totalApe)}</td>
                 <td><button class="dg-del-btn ach-del">✕</button></td>
               </tr>`).join('')}
           </tbody>
@@ -82,7 +83,7 @@ export async function render(container) {
                 <td><input class="cell-input" type="text" data-f="trip" value="${escapeHtml(r.trip)}" /></td>
                 <td><input class="cell-input" type="text" data-f="target" value="${escapeHtml(r.target ?? '')}" /></td>
                 <td><input class="cell-input" type="text" data-f="reward" value="${escapeHtml(r.reward || '')}" /></td>
-                <td class="num">${ape === null ? '<span class="text-muted">—</span>' : '₱ ' + fmtMoney(ape)}</td>
+                <td class="num trip-ape">${ape === null ? '<span class="text-muted">—</span>' : '₱ ' + fmtMoney(ape)}</td>
                 <td><button class="dg-del-btn trip-del">✕</button></td>
               </tr>`;
             }).join('')}
@@ -94,23 +95,23 @@ export async function render(container) {
       <div class="card">
         <h3>QPB 2026</h3>
         <p class="section-note">Reward figures here are planning estimates recomputed from "FYP for quarter" × tier % — treat them as a guide, not a guaranteed payout.</p>
-        ${d.qpb.quarters.map((q) => {
+        ${d.qpb.quarters.map((q, qi) => {
           const qApe = q.monthIdx.reduce((s, mi) => s + num(d.monthlyApe[mi]), 0);
           return `
-          <h4>${escapeHtml(q.label)} <span class="text-muted" style="font-weight:400">— APE so far: ₱ ${fmtMoney(qApe)}</span></h4>
+          <h4>${escapeHtml(q.label)} <span class="text-muted" style="font-weight:400">— APE so far: <span id="qpbApe-${qi}">₱ ${fmtMoney(qApe)}</span></span></h4>
           <div style="max-width:220px;margin-bottom:8px;">
             <label class="text-muted">FYP for quarter</label>
-            <input type="number" class="qpb-fyp" data-q="${q.label}" value="${q.fypForQuarter ?? 0}" />
+            <input type="number" class="qpb-fyp" data-qi="${qi}" value="${q.fypForQuarter ?? 0}" />
           </div>
           <table class="dg-table" style="width:100%;margin-bottom:14px;">
             <thead><tr><th class="num" style="width:140px">Target</th><th class="num" style="width:80px">%</th><th class="num" style="width:130px">To go</th><th class="num" style="width:130px">Reward</th></tr></thead>
             <tbody>
               ${q.tiers.map((t, ti) => `
                 <tr>
-                  <td class="num"><input class="cell-input qpb-target" data-q="${q.label}" data-ti="${ti}" type="number" value="${t.target}" style="text-align:right" /></td>
-                  <td class="num"><input class="cell-input qpb-pct" data-q="${q.label}" data-ti="${ti}" type="number" step="0.01" value="${t.percent}" style="text-align:right" /></td>
-                  <td class="num">₱ ${fmtMoney(t.target - qApe)}</td>
-                  <td class="num">₱ ${fmtMoney((num(q.fypForQuarter)) * num(t.percent))}</td>
+                  <td class="num"><input class="cell-input qpb-target" data-qi="${qi}" data-ti="${ti}" type="number" value="${t.target}" style="text-align:right" /></td>
+                  <td class="num"><input class="cell-input qpb-pct" data-qi="${qi}" data-ti="${ti}" type="number" step="0.01" value="${t.percent}" style="text-align:right" /></td>
+                  <td class="num qpb-togo" data-qi="${qi}" data-ti="${ti}">₱ ${fmtMoney(t.target - qApe)}</td>
+                  <td class="num qpb-reward" data-qi="${qi}" data-ti="${ti}">₱ ${fmtMoney((num(q.fypForQuarter)) * num(t.percent))}</td>
                 </tr>`).join('')}
             </tbody>
           </table>`;
@@ -120,28 +121,67 @@ export async function render(container) {
     wire();
   }
 
+  // Structural changes (add/remove a goal or trip) still need a full repaint.
   function persist() { markDirty('scorecard'); paint(); }
+
+  // Recompute + patch only the computed output cells — no input elements are
+  // touched, so typing keeps focus/cursor/scroll intact.
+  function updateComputed() {
+    const totalApe = d.monthlyApe.reduce((a, b) => a + num(b), 0);
+    const totalCc = d.monthlyCc.reduce((a, b) => a + num(b), 0);
+
+    const apeCell = container.querySelector('#apeTotalCell');
+    if (apeCell) apeCell.textContent = '₱ ' + fmtMoney(totalApe);
+    const ccCell = container.querySelector('#ccTotalCell');
+    if (ccCell) ccCell.textContent = totalCc;
+
+    container.querySelectorAll('#achieversBody tr').forEach((tr) => {
+      const r = d.achieversClub.find((x) => x._id === tr.dataset.id);
+      const cell = tr.querySelector('.ach-togo');
+      if (r && cell) cell.textContent = '₱ ' + fmtMoney(num(r.target) - totalApe);
+    });
+
+    container.querySelectorAll('#tripsBody tr').forEach((tr) => {
+      const r = d.tripQualifications.find((x) => x._id === tr.dataset.id);
+      const cell = tr.querySelector('.trip-ape');
+      if (!r || !cell) return;
+      const ape = computeTripApe(r, d.monthlyApe);
+      cell.innerHTML = ape === null ? '<span class="text-muted">—</span>' : '₱ ' + fmtMoney(ape);
+    });
+
+    d.qpb.quarters.forEach((q, qi) => {
+      const qApe = q.monthIdx.reduce((s, mi) => s + num(d.monthlyApe[mi]), 0);
+      const apeSpan = container.querySelector(`#qpbApe-${qi}`);
+      if (apeSpan) apeSpan.textContent = '₱ ' + fmtMoney(qApe);
+      q.tiers.forEach((t, ti) => {
+        const togoCell = container.querySelector(`.qpb-togo[data-qi="${qi}"][data-ti="${ti}"]`);
+        if (togoCell) togoCell.textContent = '₱ ' + fmtMoney(t.target - qApe);
+        const rewardCell = container.querySelector(`.qpb-reward[data-qi="${qi}"][data-ti="${ti}"]`);
+        if (rewardCell) rewardCell.textContent = '₱ ' + fmtMoney(num(q.fypForQuarter) * num(t.percent));
+      });
+    });
+  }
 
   function wire() {
     container.querySelectorAll('[data-arr]').forEach((input) => {
-      input.addEventListener('input', () => { d[input.dataset.arr][+input.dataset.i] = num(input.value); persist(); });
+      input.addEventListener('input', () => { d[input.dataset.arr][+input.dataset.i] = num(input.value); markDirty('scorecard'); updateComputed(); });
     });
     container.querySelectorAll('#achieversBody tr').forEach((tr) => {
       const r = d.achieversClub.find((x) => x._id === tr.dataset.id);
       tr.querySelectorAll('[data-f]').forEach((inp) => {
-        inp.addEventListener('input', () => { r[inp.dataset.f] = inp.type === 'number' ? num(inp.value) : inp.value; persist(); });
+        inp.addEventListener('input', () => { r[inp.dataset.f] = inp.type === 'number' ? num(inp.value) : inp.value; markDirty('scorecard'); updateComputed(); });
       });
       tr.querySelector('.ach-del').addEventListener('click', () => { d.achieversClub.splice(d.achieversClub.indexOf(r), 1); persist(); });
     });
     const addAch = container.querySelector('#addAchiever');
     if (addAch) addAch.addEventListener('click', () => { d.achieversClub.push({ _id: uid(), goal: '', target: 0, reward: '', period: '' }); persist(); });
 
-    container.querySelector('#rewardPerCase').addEventListener('input', (e) => { d.rookieProducersBonus.rewardPerCase = num(e.target.value); persist(); });
+    container.querySelector('#rewardPerCase').addEventListener('input', (e) => { d.rookieProducersBonus.rewardPerCase = num(e.target.value); markDirty('scorecard'); });
 
     container.querySelectorAll('#tripsBody tr').forEach((tr) => {
       const r = d.tripQualifications.find((x) => x._id === tr.dataset.id);
       tr.querySelectorAll('[data-f]').forEach((inp) => {
-        inp.addEventListener('input', () => { r[inp.dataset.f] = inp.value; persist(); });
+        inp.addEventListener('input', () => { r[inp.dataset.f] = inp.value; markDirty('scorecard'); updateComputed(); });
       });
       tr.querySelector('.trip-del').addEventListener('click', () => { d.tripQualifications.splice(d.tripQualifications.indexOf(r), 1); persist(); });
     });
@@ -150,18 +190,18 @@ export async function render(container) {
 
     container.querySelectorAll('.qpb-fyp').forEach((inp) => {
       inp.addEventListener('input', () => {
-        const q = d.qpb.quarters.find((x) => x.label === inp.dataset.q);
+        const q = d.qpb.quarters[+inp.dataset.qi];
         q.fypForQuarter = num(inp.value);
-        persist();
+        markDirty('scorecard'); updateComputed();
       });
     });
     container.querySelectorAll('.qpb-target, .qpb-pct').forEach((inp) => {
       inp.addEventListener('input', () => {
-        const q = d.qpb.quarters.find((x) => x.label === inp.dataset.q);
+        const q = d.qpb.quarters[+inp.dataset.qi];
         const t = q.tiers[+inp.dataset.ti];
         if (inp.classList.contains('qpb-target')) t.target = num(inp.value);
         else t.percent = num(inp.value);
-        persist();
+        markDirty('scorecard'); updateComputed();
       });
     });
 

@@ -1,7 +1,6 @@
 import { loadTab, markDirty } from '../store.js';
-import { uid, escapeHtml, num } from '../utils.js';
+import { uid, escapeHtml, num, showToast, withScrollPreserved } from '../utils.js';
 import { downloadSingleSheet, readWorkbook, parseSheetRows } from '../excel.js';
-import { showToast } from '../utils.js';
 
 const STAGE_NAMES = {
   'Prospecting': 'Level 1', 'Engagement & Approaching': 'Level 2', 'Set Appointment': 'Level 3',
@@ -12,7 +11,9 @@ export async function render(container) {
   const d = await loadTab('selling-prospect-list');
   d.levels.forEach((lvl) => (d.board[lvl] || (d.board[lvl] = [])).forEach((c) => { if (!c._id) c._id = uid(); }));
 
-  function paint() {
+  function paint() { withScrollPreserved(container, paintInner); }
+
+  function paintInner() {
     container.innerHTML = `
       <div class="tab-header">
         <div>

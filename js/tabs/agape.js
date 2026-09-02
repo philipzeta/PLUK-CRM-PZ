@@ -1,7 +1,6 @@
 import { loadTab, markDirty } from '../store.js';
-import { num, fmtMoney, uid, escapeHtml } from '../utils.js';
+import { num, fmtMoney, uid, escapeHtml, showToast, withScrollPreserved } from '../utils.js';
 import { downloadSingleSheet, readWorkbook, parseSheetRows } from '../excel.js';
-import { showToast } from '../utils.js';
 import { computeAgape as compute } from '../formulas.js';
 
 function itemRow(label, amount, onLabel, onAmount, onDel, extra) {
@@ -20,7 +19,9 @@ export async function render(container) {
   d.goals.forEach((it) => { if (!it._id) it._id = uid(); });
   d.ftJobItems.forEach((it) => { if (!it._id) it._id = uid(); });
 
-  function paint() {
+  function paint() { withScrollPreserved(container, paintInner); }
+
+  function paintInner() {
     const c = compute(d);
 
     const groupHtml = (sec) => sec.groups.map((g) => `
@@ -49,12 +50,12 @@ export async function render(container) {
         <div class="card">
           <h3>I. Planning my monthly budget</h3>
           ${d.sections.map((sec) => sec.id === 'living' ? `<h4 style="margin-top:0">${escapeHtml(sec.title)}</h4>${groupHtml(sec)}` : '').join('')}
-          <table class="kv-table"><tbody><tr class="total-row"><td>Total monthly for living expenses</td><td class="num" style="width:150px">₱ ${fmtMoney(c.livingTotal)}</td><td style="width:34px"></td></tr></tbody></table>
+          <table class="kv-table"><tbody><tr class="total-row"><td>Total monthly for living expenses</td><td class="num" id="livingTotalVal" style="width:150px">₱ ${fmtMoney(c.livingTotal)}</td><td style="width:34px"></td></tr></tbody></table>
         </div>
 
         <div class="card">
-          ${d.sections.map((sec) => sec.id === 'business' ? `<h3>${escapeHtml(sec.title)}</h3>${groupHtml(sec)}<table class="kv-table"><tbody><tr class="total-row"><td>Total monthly for business expenses</td><td class="num" style="width:150px">₱ ${fmtMoney(c.businessTotal)}</td><td style="width:34px"></td></tr></tbody></table>` : '').join('')}
-          ${d.sections.map((sec) => sec.id === 'savings' ? `<h3 style="margin-top:16px">${escapeHtml(sec.title)}</h3>${groupHtml(sec)}<table class="kv-table"><tbody><tr class="total-row"><td>Total monthly for savings & investments</td><td class="num" style="width:150px">₱ ${fmtMoney(c.savingsTotal)}</td><td style="width:34px"></td></tr></tbody></table>` : '').join('')}
+          ${d.sections.map((sec) => sec.id === 'business' ? `<h3>${escapeHtml(sec.title)}</h3>${groupHtml(sec)}<table class="kv-table"><tbody><tr class="total-row"><td>Total monthly for business expenses</td><td class="num" id="businessTotalVal" style="width:150px">₱ ${fmtMoney(c.businessTotal)}</td><td style="width:34px"></td></tr></tbody></table>` : '').join('')}
+          ${d.sections.map((sec) => sec.id === 'savings' ? `<h3 style="margin-top:16px">${escapeHtml(sec.title)}</h3>${groupHtml(sec)}<table class="kv-table"><tbody><tr class="total-row"><td>Total monthly for savings & investments</td><td class="num" id="savingsTotalVal" style="width:150px">₱ ${fmtMoney(c.savingsTotal)}</td><td style="width:34px"></td></tr></tbody></table>` : '').join('')}
         </div>
       </div>
 
@@ -68,7 +69,7 @@ export async function render(container) {
             </tbody>
           </table>
           <button class="btn btn-light btn-sm add-goal" style="margin:6px 0 4px;">+ Add goal</button>
-          <table class="kv-table"><tbody><tr class="total-row"><td>Total monthly for future & goals</td><td class="num" style="width:150px">₱ ${fmtMoney(c.goalsTotal)}</td><td style="width:34px"></td></tr></tbody></table>
+          <table class="kv-table"><tbody><tr class="total-row"><td>Total monthly for future & goals</td><td class="num" id="goalsTotalVal" style="width:150px">₱ ${fmtMoney(c.goalsTotal)}</td><td style="width:34px"></td></tr></tbody></table>
         </div>
 
         <div class="card">
@@ -79,7 +80,7 @@ export async function render(container) {
             </tbody>
           </table>
           <button class="btn btn-light btn-sm add-ftjob" style="margin:6px 0 4px;">+ Add line</button>
-          <table class="kv-table"><tbody><tr class="total-row"><td>Total</td><td class="num" style="width:150px">₱ ${fmtMoney(c.ftJobTotal)}</td><td style="width:34px"></td></tr></tbody></table>
+          <table class="kv-table"><tbody><tr class="total-row"><td>Total</td><td class="num" id="ftJobTotalVal" style="width:150px">₱ ${fmtMoney(c.ftJobTotal)}</td><td style="width:34px"></td></tr></tbody></table>
           <div style="margin-top:12px"><label class="text-muted">Income from employment (monthly)</label>
             <input type="number" step="any" id="incomeFromEmployment" value="${d.incomeFromEmployment ?? 0}" />
           </div>
@@ -89,9 +90,9 @@ export async function render(container) {
       <div class="card">
         <h3>III. Planning my annual income goal</h3>
         <div class="grid-3">
-          <div class="stat"><div class="stat-label">Monthly income requirement</div><div class="stat-value">₱ ${fmtMoney(c.incomeRequirement)}</div></div>
-          <div class="stat"><div class="stat-label">Target monthly income from PRU LIFE UK</div><div class="stat-value">₱ ${fmtMoney(c.targetFromBusiness)}</div></div>
-          <div class="stat"><div class="stat-label">Annual income requirement</div><div class="stat-value">₱ ${fmtMoney(c.annualIncomeRequirement)}</div></div>
+          <div class="stat"><div class="stat-label">Monthly income requirement</div><div class="stat-value" id="incomeRequirementVal">₱ ${fmtMoney(c.incomeRequirement)}</div></div>
+          <div class="stat"><div class="stat-label">Target monthly income from PRU LIFE UK</div><div class="stat-value" id="targetFromBusinessVal">₱ ${fmtMoney(c.targetFromBusiness)}</div></div>
+          <div class="stat"><div class="stat-label">Annual income requirement</div><div class="stat-value" id="annualIncomeRequirementVal">₱ ${fmtMoney(c.annualIncomeRequirement)}</div></div>
         </div>
         <div class="grid-3" style="margin-top:14px">
           <div>
@@ -102,9 +103,9 @@ export async function render(container) {
             <label class="text-muted">Average APE per case</label>
             <input type="number" step="any" id="avgApe" value="${d.avgApePerCase ?? 36000}" />
           </div>
-          <div class="stat"><div class="stat-label">Annual premium target</div><div class="stat-value">₱ ${fmtMoney(c.annualPremiumTarget)}</div></div>
+          <div class="stat"><div class="stat-label">Annual premium target</div><div class="stat-value" id="annualPremiumTargetVal">₱ ${fmtMoney(c.annualPremiumTarget)}</div></div>
         </div>
-        <div class="stat" style="margin-top:14px; max-width:260px;"><div class="stat-label">Number of cases in one year</div><div class="stat-value">${c.numCases.toFixed(1)}</div></div>
+        <div class="stat" style="margin-top:14px; max-width:260px;"><div class="stat-label">Number of cases in one year</div><div class="stat-value" id="numCasesVal">${c.numCases.toFixed(1)}</div></div>
       </div>
 
       <div class="card">
@@ -113,10 +114,10 @@ export async function render(container) {
         <table class="kv-table">
           <thead><tr><th>Sales activity</th><th class="num">Annual</th><th class="num">Monthly (÷12)</th></tr></thead>
           <tbody>
-            <tr><td>No. of prospects (× 15)</td><td class="num">${c.prospects.toFixed(1)}</td><td class="num">${(c.prospects/12).toFixed(1)}</td></tr>
-            <tr><td>No. of appointments (× 5)</td><td class="num">${c.appointments.toFixed(1)}</td><td class="num">${(c.appointments/12).toFixed(1)}</td></tr>
-            <tr><td>No. of client meetings (× 3)</td><td class="num">${c.meetings.toFixed(1)}</td><td class="num">${(c.meetings/12).toFixed(1)}</td></tr>
-            <tr><td>No. of closed sales (× 1)</td><td class="num">${c.closed.toFixed(1)}</td><td class="num">${(c.closed/12).toFixed(1)}</td></tr>
+            <tr><td>No. of prospects (× 15)</td><td class="num" id="prospectsAnnualVal">${c.prospects.toFixed(1)}</td><td class="num" id="prospectsMonthlyVal">${(c.prospects/12).toFixed(1)}</td></tr>
+            <tr><td>No. of appointments (× 5)</td><td class="num" id="appointmentsAnnualVal">${c.appointments.toFixed(1)}</td><td class="num" id="appointmentsMonthlyVal">${(c.appointments/12).toFixed(1)}</td></tr>
+            <tr><td>No. of client meetings (× 3)</td><td class="num" id="meetingsAnnualVal">${c.meetings.toFixed(1)}</td><td class="num" id="meetingsMonthlyVal">${(c.meetings/12).toFixed(1)}</td></tr>
+            <tr><td>No. of closed sales (× 1)</td><td class="num" id="closedAnnualVal">${c.closed.toFixed(1)}</td><td class="num" id="closedMonthlyVal">${(c.closed/12).toFixed(1)}</td></tr>
           </tbody>
         </table>
       </div>
@@ -125,7 +126,36 @@ export async function render(container) {
     wire();
   }
 
+  // Recompute + patch only the computed output cells, without touching any
+  // input element — this is what runs on every keystroke, so focus, cursor
+  // position and scroll stay exactly where they are.
+  function updateComputed() {
+    const c = compute(d);
+    const set = (id, text) => { const el = container.querySelector('#' + id); if (el) el.textContent = text; };
+    set('livingTotalVal', '₱ ' + fmtMoney(c.livingTotal));
+    set('businessTotalVal', '₱ ' + fmtMoney(c.businessTotal));
+    set('savingsTotalVal', '₱ ' + fmtMoney(c.savingsTotal));
+    set('goalsTotalVal', '₱ ' + fmtMoney(c.goalsTotal));
+    set('ftJobTotalVal', '₱ ' + fmtMoney(c.ftJobTotal));
+    set('incomeRequirementVal', '₱ ' + fmtMoney(c.incomeRequirement));
+    set('targetFromBusinessVal', '₱ ' + fmtMoney(c.targetFromBusiness));
+    set('annualIncomeRequirementVal', '₱ ' + fmtMoney(c.annualIncomeRequirement));
+    set('annualPremiumTargetVal', '₱ ' + fmtMoney(c.annualPremiumTarget));
+    set('numCasesVal', c.numCases.toFixed(1));
+    set('prospectsAnnualVal', c.prospects.toFixed(1));
+    set('prospectsMonthlyVal', (c.prospects / 12).toFixed(1));
+    set('appointmentsAnnualVal', c.appointments.toFixed(1));
+    set('appointmentsMonthlyVal', (c.appointments / 12).toFixed(1));
+    set('meetingsAnnualVal', c.meetings.toFixed(1));
+    set('meetingsMonthlyVal', (c.meetings / 12).toFixed(1));
+    set('closedAnnualVal', c.closed.toFixed(1));
+    set('closedMonthlyVal', (c.closed / 12).toFixed(1));
+  }
+
+  // Structural changes (add/remove a row) still need a full repaint.
   function persist() { markDirty('agape'); paint(); }
+  // Plain value edits: save + patch computed cells only, no repaint.
+  function persistValue() { markDirty('agape'); updateComputed(); }
 
   function wire() {
     container.querySelectorAll('table[data-sec] tr[data-id]').forEach((tr) => {
@@ -133,7 +163,7 @@ export async function render(container) {
       const grp = sec.groups.find((g) => g.title === tr.closest('table').dataset.grp);
       const it = grp.items.find((x) => x._id === tr.dataset.id);
       tr.querySelector('.item-label').addEventListener('input', (e) => { it.label = e.target.value; markDirty('agape'); });
-      tr.querySelector('.item-amount').addEventListener('input', (e) => { it.amount = num(e.target.value); persist(); });
+      tr.querySelector('.item-amount').addEventListener('input', (e) => { it.amount = num(e.target.value); persistValue(); });
       tr.querySelector('.item-del').addEventListener('click', () => { grp.items.splice(grp.items.indexOf(it), 1); persist(); });
     });
 
@@ -150,7 +180,7 @@ export async function render(container) {
       const it = d.goals.find((x) => x._id === tr.dataset.id);
       tr.querySelector('.item-label').addEventListener('input', (e) => { it.label = e.target.value; markDirty('agape'); });
       tr.querySelector('.item-extra').addEventListener('input', (e) => { it.time = e.target.value; markDirty('agape'); });
-      tr.querySelector('.item-amount').addEventListener('input', (e) => { it.amount = num(e.target.value); persist(); });
+      tr.querySelector('.item-amount').addEventListener('input', (e) => { it.amount = num(e.target.value); persistValue(); });
       tr.querySelector('.item-del').addEventListener('click', () => { d.goals.splice(d.goals.indexOf(it), 1); persist(); });
     });
     const addGoal = container.querySelector('.add-goal');
@@ -159,15 +189,15 @@ export async function render(container) {
     container.querySelectorAll('table[data-ftjob] tr[data-id]').forEach((tr) => {
       const it = d.ftJobItems.find((x) => x._id === tr.dataset.id);
       tr.querySelector('.item-label').addEventListener('input', (e) => { it.label = e.target.value; markDirty('agape'); });
-      tr.querySelector('.item-amount').addEventListener('input', (e) => { it.amount = num(e.target.value); persist(); });
+      tr.querySelector('.item-amount').addEventListener('input', (e) => { it.amount = num(e.target.value); persistValue(); });
       tr.querySelector('.item-del').addEventListener('click', () => { d.ftJobItems.splice(d.ftJobItems.indexOf(it), 1); persist(); });
     });
     const addFt = container.querySelector('.add-ftjob');
     if (addFt) addFt.addEventListener('click', () => { d.ftJobItems.push({ _id: uid(), label: '', amount: 0 }); persist(); });
 
-    container.querySelector('#incomeFromEmployment').addEventListener('input', (e) => { d.incomeFromEmployment = num(e.target.value); persist(); });
-    container.querySelector('#avgFYC').addEventListener('input', (e) => { d.avgFirstYearCommission = num(e.target.value); persist(); });
-    container.querySelector('#avgApe').addEventListener('input', (e) => { d.avgApePerCase = num(e.target.value); persist(); });
+    container.querySelector('#incomeFromEmployment').addEventListener('input', (e) => { d.incomeFromEmployment = num(e.target.value); persistValue(); });
+    container.querySelector('#avgFYC').addEventListener('input', (e) => { d.avgFirstYearCommission = num(e.target.value); persistValue(); });
+    container.querySelector('#avgApe').addEventListener('input', (e) => { d.avgApePerCase = num(e.target.value); persistValue(); });
 
     container.querySelector('#exportBtn').addEventListener('click', doExport);
     container.querySelector('#importInput').addEventListener('change', doImport);
