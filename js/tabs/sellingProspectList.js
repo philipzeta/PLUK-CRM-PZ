@@ -11,62 +11,103 @@ export async function render(container) {
   const d = await loadTab('selling-prospect-list');
   d.levels.forEach((lvl) => (d.board[lvl] || (d.board[lvl] = [])).forEach((c) => { if (!c._id) c._id = uid(); }));
 
+  // Which stage the carousel is currently showing. UI-only state (not persisted) —
+  // same pattern as the DataGrid's page number.
+  let stageIdx = 0;
+
   function paint() { withScrollPreserved(container, paintInner); }
 
   function paintInner() {
+    const lvl = d.levels[stageIdx];
+    const cards = d.board[lvl] || (d.board[lvl] = []);
     container.innerHTML = `
       <div class="tab-header">
         <div>
           <h1 class="tab-title">🧲 Selling Journey</h1>
-          <p class="tab-subtitle">Drag your prospecting funnel forward stage by stage — add or remove names any time.</p>
+          <p class="tab-subtitle">Move each lead forward one stage at a time as they progress — no dragging, just tap ›.</p>
         </div>
         <div class="tab-actions">
           <button class="btn btn-light" id="exportBtn">⬇ Export to Excel</button>
           <label class="btn btn-light">⬆ Import from Excel<input type="file" id="importInput" accept=".xlsx,.xls" hidden /></label>
         </div>
       </div>
-      <div class="kanban">
-        ${d.levels.map((lvl) => `
-          <div class="kanban-col" data-lvl="${escapeHtml(lvl)}">
-            <h4><span>${escapeHtml(lvl)}</span><span class="text-muted">${(d.board[lvl] || []).length}</span></h4>
-            <div class="kanban-cards">
-              ${(d.board[lvl] || []).map((c) => `
-                <div class="kanban-card" data-id="${c._id}">
-                  <input type="text" class="card-name" value="${escapeHtml(c.name)}" placeholder="Name" title="${escapeHtml(c.name)}" />
-                  <div class="kanban-card-row2">
-                    <input type="text" inputmode="decimal" class="card-ape money-input" value="${c.potentialApe ?? ''}" placeholder="APE" />
-                    <button class="dg-del-btn card-del">✕</button>
-                  </div>
-                </div>`).join('')}
-            </div>
-            <button class="btn btn-light btn-sm kanban-add">+ Add</button>
+      <div class="carousel-stepper">
+        ${d.levels.map((l, i) => `
+          <button class="carousel-step ${i === stageIdx ? 'active' : ''}" data-idx="${i}">
+            ${escapeHtml(STAGE_NAMES[l] || '')} · ${escapeHtml(l)}<span class="step-count">${(d.board[l] || []).length}</span>
+          </button>`).join('')}
+      </div>
+      <div class="carousel-nav">
+        <button class="btn btn-light carousel-nav-btn" id="prevStageBtn" ${stageIdx === 0 ? 'disabled' : ''} title="Previous stage">‹ Prev stage</button>
+        <h4>${escapeHtml(lvl)} <span class="text-muted">(${cards.length})</span></h4>
+        <button class="btn btn-light carousel-nav-btn" id="nextStageBtn" ${stageIdx === d.levels.length - 1 ? 'disabled' : ''} title="Next stage">Next stage ›</button>
+      </div>
+      <div class="selling-cards">
+        ${cards.length === 0 ? `<div class="empty-state"><div class="es-emoji">🗂️</div>No leads in ${escapeHtml(lvl)} yet. Add one below.</div>` : ''}
+        ${cards.map((c) => `
+          <div class="selling-card" data-id="${c._id}">
+            <button class="card-move card-move-back" ${stageIdx === 0 ? 'disabled' : ''} title="Move back to ${escapeHtml(d.levels[stageIdx - 1] || '')}">‹</button>
+            <input type="text" class="card-name" value="${escapeHtml(c.name)}" placeholder="Name" title="${escapeHtml(c.name)}" />
+            <input type="text" inputmode="decimal" class="card-ape money-input" value="${c.potentialApe ?? ''}" placeholder="APE" />
+            <button class="dg-del-btn card-del" title="Remove">✕</button>
+            <button class="card-move card-move-fwd" ${stageIdx === d.levels.length - 1 ? 'disabled' : ''} title="Move forward to ${escapeHtml(d.levels[stageIdx + 1] || '')}">›</button>
           </div>`).join('')}
       </div>
+      <button class="btn btn-light btn-sm selling-add" id="addCardBtn">+ Add to ${escapeHtml(lvl)}</button>
     `;
     wire();
   }
 
   function persist() { markDirty('selling-prospect-list'); }
 
+  function goToStage(i) {
+    stageIdx = Math.max(0, Math.min(d.levels.length - 1, i));
+    paint();
+  }
+
+  function moveCard(item, fromLvl, direction) {
+    const toIdx = d.levels.indexOf(fromLvl) + direction;
+    if (toIdx < 0 || toIdx >= d.levels.length) return;
+    const toLvl = d.levels[toIdx];
+    d.board[fromLvl].splice(d.board[fromLvl].indexOf(item), 1);
+    (d.board[toLvl] || (d.board[toLvl] = [])).push(item);
+    persist();
+    paint();
+  }
+
   function wire() {
-    container.querySelectorAll('.kanban-col').forEach((col) => {
-      const lvl = col.dataset.lvl;
-      col.querySelectorAll('.kanban-card').forEach((card) => {
-        const item = d.board[lvl].find((c) => c._id === card.dataset.id);
-        card.querySelector('.card-name').addEventListener('input', (e) => { item.name = e.target.value; persist(); });
-        card.querySelector('.card-ape').addEventListener('input', (e) => { item.potentialApe = e.target.value === '' ? null : num(e.target.value); persist(); });
-        card.querySelector('.card-del').addEventListener('click', () => {
-          d.board[lvl].splice(d.board[lvl].indexOf(item), 1);
-          persist(); paint();
-        });
-      });
-      col.querySelector('.kanban-add').addEventListener('click', () => {
-        d.board[lvl].push({ _id: uid(), name: '', potentialApe: null });
-        persist(); paint();
-        const inputs = container.querySelectorAll(`.kanban-col[data-lvl="${CSS.escape(lvl)}"] .card-name`);
-        if (inputs.length) inputs[inputs.length - 1].focus();
-      });
+    container.querySelectorAll('.carousel-step').forEach((btn) => {
+      btn.addEventListener('click', () => goToStage(parseInt(btn.dataset.idx, 10)));
     });
+    const prevBtn = container.querySelector('#prevStageBtn');
+    const nextBtn = container.querySelector('#nextStageBtn');
+    if (prevBtn) prevBtn.addEventListener('click', () => goToStage(stageIdx - 1));
+    if (nextBtn) nextBtn.addEventListener('click', () => goToStage(stageIdx + 1));
+
+    const lvl = d.levels[stageIdx];
+    container.querySelectorAll('.selling-card').forEach((card) => {
+      const item = d.board[lvl].find((c) => c._id === card.dataset.id);
+      if (!item) return;
+      card.querySelector('.card-name').addEventListener('input', (e) => { item.name = e.target.value; persist(); });
+      card.querySelector('.card-ape').addEventListener('input', (e) => { item.potentialApe = e.target.value === '' ? null : num(e.target.value); persist(); });
+      card.querySelector('.card-del').addEventListener('click', () => {
+        d.board[lvl].splice(d.board[lvl].indexOf(item), 1);
+        persist(); paint();
+      });
+      const backBtn = card.querySelector('.card-move-back');
+      if (backBtn) backBtn.addEventListener('click', () => moveCard(item, lvl, -1));
+      const fwdBtn = card.querySelector('.card-move-fwd');
+      if (fwdBtn) fwdBtn.addEventListener('click', () => moveCard(item, lvl, 1));
+    });
+
+    const addBtn = container.querySelector('#addCardBtn');
+    if (addBtn) addBtn.addEventListener('click', () => {
+      d.board[lvl].push({ _id: uid(), name: '', potentialApe: null });
+      persist(); paint();
+      const inputs = container.querySelectorAll('.selling-card .card-name');
+      if (inputs.length) inputs[inputs.length - 1].focus();
+    });
+
     container.querySelector('#exportBtn').addEventListener('click', doExport);
     container.querySelector('#importInput').addEventListener('change', doImport);
 
