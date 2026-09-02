@@ -24,10 +24,13 @@
       </button>
       <div id="notifPanel" class="notif-panel hidden">
         <div class="notif-panel-header">
-          <strong>Follow-up alerts</strong>
-          <label class="notif-toggle" title="Ask the browser to also show desktop notifications">
-            <input type="checkbox" id="browserNotifToggle" /> Desktop alerts
-          </label>
+          <div class="notif-panel-header-top">
+            <strong>Follow-up alerts</strong>
+            <label class="notif-toggle" title="Ask the browser to also show desktop notifications">
+              <input type="checkbox" id="browserNotifToggle" /> Desktop alerts
+            </label>
+          </div>
+          <button id="markAllReadBtn" class="notif-mark-all hidden" title="Mark every alert below as read">✓ Mark all as read</button>
         </div>
         <div id="notifList" class="notif-list"></div>
       </div>

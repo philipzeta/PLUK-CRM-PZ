@@ -35,10 +35,45 @@ export function computeOverdue() {
   return items;
 }
 
+// "Read" alerts are tracked per person PER THRESHOLD (7/14/21), not just per
+// person — so marking a 7-day alert read doesn't silence the 21-day
+// escalation later if it's still unresolved by then.
+let readSet = null;
+function loadReadSet() {
+  if (readSet) return readSet;
+  try { readSet = new Set(JSON.parse(localStorage.getItem('crm:notifRead') || '[]')); } catch (e) { readSet = new Set(); }
+  return readSet;
+}
+function saveReadSet() { localStorage.setItem('crm:notifRead', JSON.stringify(Array.from(loadReadSet()))); }
+function readKey(item) { return `${item.tabId}:${item.id}:${item.bucket}`; }
+function isRead(item) { return loadReadSet().has(readKey(item)); }
+function markRead(item) { loadReadSet().add(readKey(item)); saveReadSet(); }
+function markAllRead(items) {
+  const rs = loadReadSet();
+  items.forEach((i) => rs.add(readKey(i)));
+  saveReadSet();
+}
+// Drop read-markers for alerts that no longer exist (contact was made,
+// converted to CLIENT, etc.) so storage doesn't grow forever.
+function pruneReadSet(allItems) {
+  const rs = loadReadSet();
+  const live = new Set(allItems.map(readKey));
+  let changed = false;
+  for (const key of Array.from(rs)) {
+    if (!live.has(key)) { rs.delete(key); changed = true; }
+  }
+  if (changed) saveReadSet();
+}
+
+let currentUnread = [];
+
 function renderPanel(items) {
   const list = document.getElementById('notifList');
+  const markAllBtn = document.getElementById('markAllReadBtn');
+  markAllBtn.classList.toggle('hidden', items.length === 0);
+
   if (!items.length) {
-    list.innerHTML = `<div class="notif-empty">No follow-ups overdue by 7+ days. 🎉</div>`;
+    list.innerHTML = `<div class="notif-empty">No unread follow-ups overdue by 7+ days. 🎉</div>`;
     return;
   }
   const groups = [21, 14, 7].map((b) => ({ b, rows: items.filter((i) => i.bucket === b) })).filter((g) => g.rows.length);
@@ -49,9 +84,15 @@ function renderPanel(items) {
       ${g.rows
         .map(
           (i) => `
-        <div class="notif-item" data-tab="${i.tabId}" data-rid="${i.id}">
-          <div class="ni-top"><span>${escapeHtml(i.name)}</span><span class="pill pill-${i.bucket}">${i.days}d</span></div>
-          <div class="ni-sub">${i.sourceLabel} pipeline</div>
+        <div class="notif-item" data-tab="${i.tabId}" data-rid="${i.id}" data-bucket="${i.bucket}">
+          <div class="ni-top">
+            <span>${escapeHtml(i.name)}</span>
+            <span class="pill pill-${i.bucket}">${i.days}d</span>
+          </div>
+          <div class="ni-sub">
+            <span>${i.sourceLabel} pipeline</span>
+            <button class="notif-mark-read" title="Mark as read">✓ Mark as read</button>
+          </div>
         </div>`
         )
         .join('')}
@@ -63,6 +104,11 @@ function renderPanel(items) {
     el.addEventListener('click', () => {
       if (navigateHandler) navigateHandler(el.dataset.tab, el.dataset.rid);
       document.getElementById('notifPanel').classList.add('hidden');
+    });
+    el.querySelector('.notif-mark-read').addEventListener('click', (e) => {
+      e.stopPropagation();
+      markRead({ tabId: el.dataset.tab, id: el.dataset.rid, bucket: +el.dataset.bucket });
+      refreshNotifications();
     });
   });
 }
@@ -91,17 +137,21 @@ function maybeFireDesktopNotifications(items) {
 
 export async function refreshNotifications() {
   await Promise.all(SOURCES.map((s) => loadTab(s.tabId)));
-  const items = computeOverdue();
+  const allItems = computeOverdue();
+  pruneReadSet(allItems);
+  const unread = allItems.filter((i) => !isRead(i));
+  currentUnread = unread;
+
   const badge = document.getElementById('notifBadge');
-  if (items.length) {
-    badge.textContent = items.length > 99 ? '99+' : String(items.length);
+  if (unread.length) {
+    badge.textContent = unread.length > 99 ? '99+' : String(unread.length);
     badge.classList.remove('hidden');
   } else {
     badge.classList.add('hidden');
   }
-  renderPanel(items);
-  maybeFireDesktopNotifications(items);
-  return items;
+  renderPanel(unread);
+  maybeFireDesktopNotifications(unread);
+  return unread;
 }
 
 export function initNotifications() {
@@ -113,6 +163,12 @@ export function initNotifications() {
   });
   document.addEventListener('click', (e) => {
     if (!panel.contains(e.target) && e.target !== bell) panel.classList.add('hidden');
+  });
+
+  document.getElementById('markAllReadBtn').addEventListener('click', (e) => {
+    e.stopPropagation();
+    markAllRead(currentUnread);
+    refreshNotifications();
   });
 
   const toggle = document.getElementById('browserNotifToggle');
