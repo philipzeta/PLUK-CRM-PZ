@@ -11,6 +11,30 @@ export function withScrollPreserved(el, fn) {
   return result;
 }
 
+// Wires a text input to behave like a money/amount field: it shows a
+// friendly comma-grouped value (e.g. "1,234,567.00") whenever it's not
+// focused, so large peso amounts read clearly as thousands/millions at a
+// glance, and reverts to plain editable digits while focused so typing isn't
+// fighting inserted commas. Must be used on type="text" inputs — a native
+// type="number" input cannot display commas at all. Existing 'input'
+// listeners that read the raw value keep working unchanged, since num()
+// already strips commas.
+export function wireMoneyInput(el, { decimals = 2 } = {}) {
+  if (!el) return;
+  const fmt = (v) => {
+    const n = num(v, null);
+    if (n === null) return '';
+    return n.toLocaleString('en-PH', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+  };
+  const unformat = () => {
+    const n = num(el.value, null);
+    el.value = n === null ? '' : String(n);
+  };
+  el.addEventListener('focus', () => { unformat(); el.select(); });
+  el.addEventListener('blur', () => { el.value = fmt(el.value); });
+  el.value = fmt(el.value); // format whatever was rendered on initial paint
+}
+
 export function uid() {
   return 'r' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 }

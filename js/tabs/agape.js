@@ -1,5 +1,5 @@
 import { loadTab, markDirty } from '../store.js';
-import { num, fmtMoney, uid, escapeHtml, showToast, withScrollPreserved } from '../utils.js';
+import { num, fmtMoney, uid, escapeHtml, showToast, withScrollPreserved, wireMoneyInput } from '../utils.js';
 import { downloadSingleSheet, readWorkbook, parseSheetRows } from '../excel.js';
 import { computeAgape as compute } from '../formulas.js';
 
@@ -8,7 +8,7 @@ function itemRow(label, amount, onLabel, onAmount, onDel, extra) {
     <tr>
       <td><input class="cell-input item-label" type="text" value="${escapeHtml(label)}" /></td>
       ${extra !== undefined ? `<td style="width:120px"><input class="cell-input item-extra" type="text" value="${escapeHtml(extra ?? '')}" /></td>` : ''}
-      <td class="num" style="width:150px"><input class="cell-input item-amount" type="number" step="any" value="${amount ?? ''}" style="text-align:right" /></td>
+      <td class="num" style="width:150px"><input class="cell-input item-amount money-input" type="text" inputmode="decimal" value="${amount ?? ''}" style="text-align:right" /></td>
       <td style="width:34px"><button class="dg-del-btn item-del" title="Remove">✕</button></td>
     </tr>`;
 }
@@ -82,7 +82,7 @@ export async function render(container) {
           <button class="btn btn-light btn-sm add-ftjob" style="margin:6px 0 4px;">+ Add line</button>
           <table class="kv-table"><tbody><tr class="total-row"><td>Total</td><td class="num" id="ftJobTotalVal" style="width:150px">₱ ${fmtMoney(c.ftJobTotal)}</td><td style="width:34px"></td></tr></tbody></table>
           <div style="margin-top:12px"><label class="text-muted">Income from employment (monthly)</label>
-            <input type="number" step="any" id="incomeFromEmployment" value="${d.incomeFromEmployment ?? 0}" />
+            <input type="text" inputmode="decimal" class="money-input" id="incomeFromEmployment" value="${d.incomeFromEmployment ?? 0}" />
           </div>
         </div>
       </div>
@@ -101,7 +101,7 @@ export async function render(container) {
           </div>
           <div>
             <label class="text-muted">Average APE per case</label>
-            <input type="number" step="any" id="avgApe" value="${d.avgApePerCase ?? 36000}" />
+            <input type="text" inputmode="decimal" class="money-input" id="avgApe" value="${d.avgApePerCase ?? 36000}" />
           </div>
           <div class="stat"><div class="stat-label">Annual premium target</div><div class="stat-value" id="annualPremiumTargetVal">₱ ${fmtMoney(c.annualPremiumTarget)}</div></div>
         </div>
@@ -201,6 +201,10 @@ export async function render(container) {
 
     container.querySelector('#exportBtn').addEventListener('click', doExport);
     container.querySelector('#importInput').addEventListener('change', doImport);
+
+    // Money fields: comma-formatted (₱ 1,234,567.00) while not focused, plain
+    // editable digits while typing.
+    container.querySelectorAll('.money-input').forEach((el) => wireMoneyInput(el));
   }
 
   function flatten() {

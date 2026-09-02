@@ -1,5 +1,5 @@
 import { loadTab, markDirty } from '../store.js';
-import { uid, escapeHtml, num, showToast, withScrollPreserved } from '../utils.js';
+import { uid, escapeHtml, num, showToast, withScrollPreserved, wireMoneyInput } from '../utils.js';
 import { downloadSingleSheet, readWorkbook, parseSheetRows } from '../excel.js';
 
 const STAGE_NAMES = {
@@ -33,7 +33,7 @@ export async function render(container) {
               ${(d.board[lvl] || []).map((c) => `
                 <div class="kanban-card" data-id="${c._id}">
                   <input type="text" class="card-name" value="${escapeHtml(c.name)}" placeholder="Name" />
-                  <input type="number" class="card-ape" value="${c.potentialApe ?? ''}" placeholder="APE" style="width:64px" />
+                  <input type="text" inputmode="decimal" class="card-ape money-input" value="${c.potentialApe ?? ''}" placeholder="APE" style="width:80px" />
                   <button class="dg-del-btn card-del">✕</button>
                 </div>`).join('')}
             </div>
@@ -67,6 +67,8 @@ export async function render(container) {
     });
     container.querySelector('#exportBtn').addEventListener('click', doExport);
     container.querySelector('#importInput').addEventListener('change', doImport);
+
+    container.querySelectorAll('.money-input').forEach((el) => wireMoneyInput(el));
   }
 
   function doExport() {

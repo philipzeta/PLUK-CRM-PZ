@@ -1,10 +1,15 @@
 import { loadTab, markDirty } from '../store.js';
-import { num, fmtMoney, fmtInt, escapeHtml, showToast, withScrollPreserved } from '../utils.js';
+import { num, fmtMoney, fmtInt, escapeHtml, showToast, withScrollPreserved, wireMoneyInput } from '../utils.js';
 import { computeAgape, computeActionPlan } from '../formulas.js';
 import { downloadSingleSheet, readWorkbook, parseSheetRows } from '../excel.js';
 
-function editableMonthRow(label, values, key, onChange, opts = {}) {
-  const cells = values.map((v, i) => `<td class="num"><input class="cell-input" type="number" step="any" data-i="${i}" data-key="${key}" value="${v ?? 0}" style="width:82px;text-align:right" /></td>`).join('');
+function editableMonthRow(label, values, key, money = false) {
+  const cells = values
+    .map(
+      (v, i) =>
+        `<td class="num"><input class="cell-input${money ? ' money-input' : ''}" type="${money ? 'text' : 'number'}" ${money ? 'inputmode="decimal"' : 'step="any"'} data-i="${i}" data-key="${key}" value="${v ?? 0}" style="width:82px;text-align:right" /></td>`
+    )
+    .join('');
   return `<tr><td>${escapeHtml(label)}</td>${cells}</tr>`;
 }
 
@@ -43,7 +48,7 @@ export async function render(container) {
           <table class="dg-table"><thead><tr><th style="position:sticky;left:0;background:#faf7fb">Metric</th>${monthHead}</tr></thead>
           <tbody id="salesRows">
             ${readonlyMonthRow('Target APE', c.targetApe, 'targetApe')}
-            ${editableMonthRow('Average case size', ap.sales.averageCaseSize, 'averageCaseSize')}
+            ${editableMonthRow('Average case size', ap.sales.averageCaseSize, 'averageCaseSize', true)}
             ${editableMonthRow('Number of cases', ap.sales.numberOfCases, 'numberOfCases')}
             ${readonlyMonthRow('Actual APE', c.actualApe, 'actualApe')}
             ${readonlyMonthRow('Excess / Lacking', c.excess, 'excess')}
@@ -183,6 +188,8 @@ export async function render(container) {
     });
     container.querySelector('#exportBtn').addEventListener('click', doExport);
     container.querySelector('#importInput').addEventListener('change', doImport);
+
+    container.querySelectorAll('.money-input').forEach((el) => wireMoneyInput(el));
   }
 
   function flatten() {

@@ -1,4 +1,4 @@
-import { escapeHtml, toISODate } from './utils.js';
+import { escapeHtml, toISODate, wireMoneyInput } from './utils.js';
 
 // A lightweight, dependency-free editable data grid: search, sort, pagination,
 // inline editing (text/number/date/select/checkbox), add row, delete row,
@@ -73,6 +73,7 @@ export function createDataGrid(opts) {
       if (c.type === 'select') return '150px';
       if (c.type === 'date') return '125px';
       if (c.type === 'number' || c.type === 'percent') return '95px';
+      if (c.type === 'money') return '115px';
       if (c.type === 'checkbox') return '80px';
       return '160px'; // text
     };
@@ -163,6 +164,12 @@ export function createDataGrid(opts) {
     if (c.type === 'number' || c.type === 'percent') {
       return `<td><input class="cell-input" type="number" step="any" data-key="${c.key}" value="${raw === null || raw === undefined ? '' : raw}" style="text-align:right" /></td>`;
     }
+    if (c.type === 'money') {
+      // A plain type="number" input can't display comma grouping, so money
+      // columns use a text input instead — comma-formatted (e.g. "1,234,567")
+      // while not focused, plain digits while typing (wired below).
+      return `<td><input class="cell-input money-input" type="text" inputmode="decimal" data-key="${c.key}" value="${raw === null || raw === undefined ? '' : raw}" style="text-align:right" /></td>`;
+    }
     return `<td><input class="cell-input" type="text" data-key="${c.key}" value="${escapeHtml(raw ?? '')}" /></td>`;
   }
 
@@ -225,11 +232,15 @@ export function createDataGrid(opts) {
         const evt = input.tagName === 'SELECT' || input.type === 'checkbox' || input.type === 'date' ? 'change' : 'input';
         input.addEventListener(evt, () => {
           let val = input.type === 'checkbox' ? input.checked : input.value;
-          if (input.type === 'number') val = val === '' ? null : parseFloat(val);
+          if (input.type === 'number' || input.classList.contains('money-input')) {
+            val = val === '' ? null : parseFloat(String(val).replace(/,/g, ''));
+          }
           onCellChange(row, key, val);
         });
       });
     });
+
+    container.querySelectorAll('.money-input').forEach((el) => wireMoneyInput(el));
   }
 
   render();

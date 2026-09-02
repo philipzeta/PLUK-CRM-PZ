@@ -1,5 +1,5 @@
 import { loadTab, markDirty } from '../store.js';
-import { num, fmtMoney, uid, escapeHtml, showToast, withScrollPreserved } from '../utils.js';
+import { num, fmtMoney, uid, escapeHtml, showToast, withScrollPreserved, wireMoneyInput } from '../utils.js';
 import { downloadSingleSheet, readWorkbook, parseSheetRows } from '../excel.js';
 
 function computeTripApe(trip, monthlyApe) {
@@ -40,7 +40,7 @@ export async function render(container) {
           <table class="dg-table">
             <thead><tr><th style="position:sticky;left:0;background:#faf7fb">Month</th>${d.months.map((m) => `<th class="num">${m.slice(0,3)}</th>`).join('')}<th class="num">Total</th></tr></thead>
             <tbody>
-              <tr><td style="position:sticky;left:0;background:#fff">APE</td>${d.monthlyApe.map((v, i) => `<td class="num"><input class="cell-input" type="number" step="any" data-arr="monthlyApe" data-i="${i}" value="${v ?? 0}" style="width:78px;text-align:right" /></td>`).join('')}<td class="num" id="apeTotalCell" style="font-weight:700">₱ ${fmtMoney(totalApe)}</td></tr>
+              <tr><td style="position:sticky;left:0;background:#fff">APE</td>${d.monthlyApe.map((v, i) => `<td class="num"><input class="cell-input money-input" type="text" inputmode="decimal" data-arr="monthlyApe" data-i="${i}" value="${v ?? 0}" style="width:78px;text-align:right" /></td>`).join('')}<td class="num" id="apeTotalCell" style="font-weight:700">₱ ${fmtMoney(totalApe)}</td></tr>
               <tr><td style="position:sticky;left:0;background:#fff">Case count</td>${d.monthlyCc.map((v, i) => `<td class="num"><input class="cell-input" type="number" step="any" data-arr="monthlyCc" data-i="${i}" value="${v ?? 0}" style="width:78px;text-align:right" /></td>`).join('')}<td class="num" id="ccTotalCell" style="font-weight:700">${totalCc}</td></tr>
             </tbody>
           </table>
@@ -55,7 +55,7 @@ export async function render(container) {
             ${d.achieversClub.map((r) => `
               <tr data-id="${r._id}">
                 <td><input class="cell-input" type="text" data-f="goal" value="${escapeHtml(r.goal)}" /></td>
-                <td class="num"><input class="cell-input" type="number" data-f="target" value="${r.target ?? 0}" style="text-align:right" /></td>
+                <td class="num"><input class="cell-input money-input" type="text" inputmode="decimal" data-f="target" value="${r.target ?? 0}" style="text-align:right" /></td>
                 <td><input class="cell-input" type="text" data-f="reward" value="${escapeHtml(r.reward || '')}" /></td>
                 <td><input class="cell-input" type="text" data-f="period" value="${escapeHtml(r.period || '')}" /></td>
                 <td class="num ach-togo">₱ ${fmtMoney(num(r.target) - totalApe)}</td>
@@ -68,7 +68,7 @@ export async function render(container) {
         <h4>Rookie Producers Bonus</h4>
         <p class="text-muted" style="font-size:12.5px">${d.rookieProducersBonus.tiers.map(escapeHtml).join('<br>')}</p>
         <label class="text-muted">Reward per case count</label>
-        <input type="number" id="rewardPerCase" value="${d.rookieProducersBonus.rewardPerCase ?? 0}" style="max-width:160px" />
+        <input type="text" inputmode="decimal" class="money-input" id="rewardPerCase" value="${d.rookieProducersBonus.rewardPerCase ?? 0}" style="max-width:160px" />
       </div>
 
       <div class="card">
@@ -101,14 +101,14 @@ export async function render(container) {
           <h4>${escapeHtml(q.label)} <span class="text-muted" style="font-weight:400">— APE so far: <span id="qpbApe-${qi}">₱ ${fmtMoney(qApe)}</span></span></h4>
           <div style="max-width:220px;margin-bottom:8px;">
             <label class="text-muted">FYP for quarter</label>
-            <input type="number" class="qpb-fyp" data-qi="${qi}" value="${q.fypForQuarter ?? 0}" />
+            <input type="text" inputmode="decimal" class="qpb-fyp money-input" data-qi="${qi}" value="${q.fypForQuarter ?? 0}" />
           </div>
           <table class="dg-table" style="width:100%;margin-bottom:14px;">
             <thead><tr><th class="num" style="width:140px">Target</th><th class="num" style="width:80px">%</th><th class="num" style="width:130px">To go</th><th class="num" style="width:130px">Reward</th></tr></thead>
             <tbody>
               ${q.tiers.map((t, ti) => `
                 <tr>
-                  <td class="num"><input class="cell-input qpb-target" data-qi="${qi}" data-ti="${ti}" type="number" value="${t.target}" style="text-align:right" /></td>
+                  <td class="num"><input class="cell-input qpb-target money-input" data-qi="${qi}" data-ti="${ti}" type="text" inputmode="decimal" value="${t.target}" style="text-align:right" /></td>
                   <td class="num"><input class="cell-input qpb-pct" data-qi="${qi}" data-ti="${ti}" type="number" step="0.01" value="${t.percent}" style="text-align:right" /></td>
                   <td class="num qpb-togo" data-qi="${qi}" data-ti="${ti}">₱ ${fmtMoney(t.target - qApe)}</td>
                   <td class="num qpb-reward" data-qi="${qi}" data-ti="${ti}">₱ ${fmtMoney((num(q.fypForQuarter)) * num(t.percent))}</td>
@@ -169,7 +169,7 @@ export async function render(container) {
     container.querySelectorAll('#achieversBody tr').forEach((tr) => {
       const r = d.achieversClub.find((x) => x._id === tr.dataset.id);
       tr.querySelectorAll('[data-f]').forEach((inp) => {
-        inp.addEventListener('input', () => { r[inp.dataset.f] = inp.type === 'number' ? num(inp.value) : inp.value; markDirty('scorecard'); updateComputed(); });
+        inp.addEventListener('input', () => { r[inp.dataset.f] = inp.dataset.f === 'target' ? num(inp.value) : inp.value; markDirty('scorecard'); updateComputed(); });
       });
       tr.querySelector('.ach-del').addEventListener('click', () => { d.achieversClub.splice(d.achieversClub.indexOf(r), 1); persist(); });
     });
@@ -207,6 +207,8 @@ export async function render(container) {
 
     container.querySelector('#exportBtn').addEventListener('click', doExport);
     container.querySelector('#importInput').addEventListener('change', doImport);
+
+    container.querySelectorAll('.money-input').forEach((el) => wireMoneyInput(el));
   }
 
   function doExport() {

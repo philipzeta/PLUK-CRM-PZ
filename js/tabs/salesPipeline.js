@@ -198,7 +198,7 @@ export async function render(container) {
     const cols = [
       { key: 'clientName', label: 'Client Name', type: 'text', editable: true, width: '220px' },
       { key: 'product', label: 'Product', type: 'text', editable: true, width: '140px' },
-      { key: 'ape', label: 'APE', type: 'number', editable: true, width: '100px' },
+      { key: 'ape', label: 'APE', type: 'money', editable: true, width: '110px' },
       { key: 'chance', label: '% Chance (0-1)', type: 'number', editable: true, width: '110px' },
       { key: 'targetClosingDate', label: 'Target Closing Date', type: 'date', editable: true, width: '150px' },
       { key: 'remarks', label: 'Remarks', type: 'text', editable: true, width: '220px' },
