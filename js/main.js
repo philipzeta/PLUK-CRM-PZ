@@ -6,7 +6,6 @@ import { showToast } from './utils.js';
 import * as agapeTab from './tabs/agape.js';
 import * as actionPlanTab from './tabs/actionplan.js';
 import * as sellingProspectTab from './tabs/sellingProspectList.js';
-import * as recruitProspectTab from './tabs/recruitProspectList.js';
 import * as scorecardTab from './tabs/scorecard.js';
 import * as productKnowledgeTab from './tabs/productKnowledge.js';
 import * as sellingTab from './tabs/selling.js';
@@ -18,7 +17,6 @@ const TAB_MODULES = {
   'agape': agapeTab,
   'action-plan': actionPlanTab,
   'selling-prospect-list': sellingProspectTab,
-  'recruit-prospect-list': recruitProspectTab,
   'scorecard': scorecardTab,
   'product-knowledge': productKnowledgeTab,
   'selling': sellingTab,
@@ -28,12 +26,16 @@ const TAB_MODULES = {
 };
 
 const DEFAULT_TAB = 'agape';
+// The old "Recruit Prospect List" tab was folded into "Recruitment" — send
+// any old bookmark/link there instead of falling back to the default tab.
+const TAB_REDIRECTS = { 'recruit-prospect-list': 'recruitment' };
 const mainContent = document.getElementById('mainContent');
 
 async function renderRoute() {
   const hash = (location.hash || '#' + DEFAULT_TAB).slice(1);
   const focusParam = new URLSearchParams(location.hash.split('?')[1] || '');
-  const tabId = hash.split('?')[0];
+  let tabId = hash.split('?')[0];
+  if (TAB_REDIRECTS[tabId]) tabId = TAB_REDIRECTS[tabId];
   const mod = TAB_MODULES[tabId] || TAB_MODULES[DEFAULT_TAB];
 
   document.querySelectorAll('.tab-nav a').forEach((a) => {

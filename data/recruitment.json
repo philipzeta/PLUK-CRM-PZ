@@ -18,7 +18,13 @@
     "Tiktok",
     "PruLeads",
     "Referrals",
-    "Career Talk"
+    "Career Talk",
+    "WARM MARKET",
+    "WORK",
+    "ORGANIZATION",
+    "SCHOOLMATE",
+    "REFERRALS",
+    "COLD MARKET"
   ],
   "demographicOptions": [
     "FRIEND",
@@ -33,5 +39,13 @@
     "CHILD HOOD/NEIGHBORHOOD",
     "PRULIFE LEADS"
   ],
-  "rows": []
+  "sourceLegend": [
+    { "source": "WARM MARKET", "description": "- Relatives, Friends, etc." },
+    { "source": "WORK", "description": "- Previous and present work" },
+    { "source": "ORGANIZATION", "description": "- Church, clubs, etc." },
+    { "source": "SCHOOLMATE", "description": "- Elementary, High School, College" },
+    { "source": "REFERRALS", "description": "- Referred by someone else" }
+  ],
+  "rows": [],
+  "_migratedFromProspectList": false
 }

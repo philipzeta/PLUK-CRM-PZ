@@ -17,7 +17,7 @@ export async function render(container) {
     container.innerHTML = `
       <div class="tab-header">
         <div>
-          <h1 class="tab-title">🧲 Selling Prospect List</h1>
+          <h1 class="tab-title">🧲 Selling Journey</h1>
           <p class="tab-subtitle">Drag your prospecting funnel forward stage by stage — add or remove names any time.</p>
         </div>
         <div class="tab-actions">
@@ -86,7 +86,7 @@ export async function render(container) {
       ...d.levels.map((lvl) => ({ key: lvl, header: `${STAGE_NAMES[lvl] || ''} - ${lvl}`.trim() })),
       { key: 'potentialApe', header: 'Potential APE' },
     ];
-    downloadSingleSheet('SELLING PROSPECT LIST', columns, rows, 'Selling Prospect List.xlsx');
+    downloadSingleSheet('SELLING JOURNEY', columns, rows, 'Selling Journey.xlsx');
   }
 
   async function doImport(e) {
@@ -99,7 +99,7 @@ export async function render(container) {
         ...d.levels.map((lvl) => ({ key: lvl, header: lvl, aliases: [lvl, STAGE_NAMES[lvl], `${STAGE_NAMES[lvl]} - ${lvl}`] })),
         { key: 'potentialApe', header: 'Potential APE', aliases: ['Potential APE'] },
       ];
-      const rows = parseSheetRows(wb, columns, 'SELLING PROSPECT LIST');
+      const rows = parseSheetRows(wb, columns, 'SELLING JOURNEY');
       d.levels.forEach((lvl) => { d.board[lvl] = []; });
       rows.forEach((r) => {
         d.levels.forEach((lvl) => {

@@ -5,7 +5,6 @@ export const TABS = [
   { id: 'agape', file: 'agape.json' },
   { id: 'action-plan', file: 'actionplan.json' },
   { id: 'selling-prospect-list', file: 'selling_prospect_list.json' },
-  { id: 'recruit-prospect-list', file: 'recruit_prospect_list.json' },
   { id: 'scorecard', file: 'scorecard.json' },
   { id: 'product-knowledge', file: 'product_knowledge.json' },
   { id: 'selling', file: 'selling.json' },
