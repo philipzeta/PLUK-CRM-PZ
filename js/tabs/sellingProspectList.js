@@ -32,9 +32,11 @@ export async function render(container) {
             <div class="kanban-cards">
               ${(d.board[lvl] || []).map((c) => `
                 <div class="kanban-card" data-id="${c._id}">
-                  <input type="text" class="card-name" value="${escapeHtml(c.name)}" placeholder="Name" />
-                  <input type="text" inputmode="decimal" class="card-ape money-input" value="${c.potentialApe ?? ''}" placeholder="APE" style="width:80px" />
-                  <button class="dg-del-btn card-del">✕</button>
+                  <input type="text" class="card-name" value="${escapeHtml(c.name)}" placeholder="Name" title="${escapeHtml(c.name)}" />
+                  <div class="kanban-card-row2">
+                    <input type="text" inputmode="decimal" class="card-ape money-input" value="${c.potentialApe ?? ''}" placeholder="APE" />
+                    <button class="dg-del-btn card-del">✕</button>
+                  </div>
                 </div>`).join('')}
             </div>
             <button class="btn btn-light btn-sm kanban-add">+ Add</button>
