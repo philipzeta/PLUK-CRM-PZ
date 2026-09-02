@@ -11,6 +11,7 @@ export const TABS = [
   { id: 'selling', file: 'selling.json' },
   { id: 'recruitment', file: 'recruitment.json' },
   { id: 'sales-pipeline', file: 'sales_pipeline.json' },
+  { id: 'todo', file: 'todo.json' },
 ];
 
 const cache = new Map();

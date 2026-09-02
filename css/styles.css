@@ -145,6 +145,8 @@ input[readonly]{background:var(--bg); color:var(--text-muted);}
 .dg-toolbar{display:flex; align-items:center; gap:10px; margin-bottom:10px; flex-wrap:wrap;}
 .dg-search{flex:1; min-width:180px; max-width:320px;}
 .dg-count{color:var(--text-muted); font-size:12px;}
+.dg-sort-summary{color:var(--brand-dark); font-size:12px; font-weight:600;}
+.dg-sort-hint{color:var(--text-muted); font-size:11px; margin:-4px 0 8px;}
 .dg-scroll{overflow:auto; border:1px solid var(--border); border-radius:8px; max-height:62vh;}
 table.dg-table{border-collapse:collapse; table-layout:fixed; font-size:12.5px;}
 table.dg-table thead th{
@@ -162,6 +164,8 @@ table.dg-table td.rownum{color:var(--text-muted); text-align:center; padding:4px
 .overdue-7{background:var(--warn-bg) !important;}
 .overdue-14{background:#fde9df !important;}
 .overdue-21{background:var(--danger-bg) !important;}
+.todo-done{opacity:.55;}
+.todo-done input.cell-input{text-decoration:line-through;}
 
 /* ---------- Kanban (Selling Prospect List) ---------- */
 .kanban{display:flex; gap:12px; overflow-x:auto; padding-bottom:8px;}

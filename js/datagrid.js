@@ -18,8 +18,12 @@ export function createDataGrid(opts) {
   } = opts;
 
   let search = '';
-  let sortKey = null;
-  let sortDir = 1;
+  // Multi-level sort: an ordered list of { key, dir } — the first entry is the
+  // primary sort, later entries break ties left over from earlier ones (like
+  // Excel/Sheets "Sort by ... then by ..."). Plain-click a header to sort by
+  // just that column; Shift-click a header to add/toggle it as another level.
+  let sortLevels = [];
+  const MAX_SORT_LEVELS = 4;
   let page = 0;
 
   function filteredRows() {
@@ -33,16 +37,24 @@ export function createDataGrid(opts) {
         })
       );
     }
-    if (sortKey) {
-      const col = columns.find((c) => c.key === sortKey);
-      rows = rows.slice().sort((a, b) => {
-        const va = col.computed ? col.computed(a) : a[sortKey];
-        const vb = col.computed ? col.computed(b) : b[sortKey];
-        if (va === vb) return 0;
-        if (va === null || va === undefined || va === '') return 1;
-        if (vb === null || vb === undefined || vb === '') return -1;
-        return (va > vb ? 1 : -1) * sortDir;
-      });
+    if (sortLevels.length) {
+      const levels = sortLevels
+        .map((lvl) => ({ ...lvl, col: columns.find((c) => c.key === lvl.key) }))
+        .filter((lvl) => lvl.col);
+      if (levels.length) {
+        rows = rows.slice().sort((a, b) => {
+          for (const { col, dir } of levels) {
+            const va = col.computed ? col.computed(a) : a[col.key];
+            const vb = col.computed ? col.computed(b) : b[col.key];
+            if (va === vb) continue;
+            if (va === null || va === undefined || va === '') return 1;
+            if (vb === null || vb === undefined || vb === '') return -1;
+            const cmp = (va > vb ? 1 : -1) * dir;
+            if (cmp !== 0) return cmp;
+          }
+          return 0;
+        });
+      }
     }
     return rows;
   }
@@ -71,12 +83,15 @@ export function createDataGrid(opts) {
     const colgroup = '<colgroup>' + colWidths.map((w) => `<col style="width:${w}">`).join('') + (onDeleteRow ? '<col style="width:36px">' : '') + '</colgroup>';
 
     const head = columns
-      .map(
-        (c, i) =>
-          `<th data-key="${c.key}" style="width:${colWidths[i]}">${escapeHtml(c.label)}${
-            sortKey === c.key ? (sortDir === 1 ? ' ▲' : ' ▼') : ''
-          }</th>`
-      )
+      .map((c, i) => {
+        const lvlIdx = sortLevels.findIndex((s) => s.key === c.key);
+        let indicator = '';
+        if (lvlIdx > -1) {
+          const arrow = sortLevels[lvlIdx].dir === 1 ? '▲' : '▼';
+          indicator = ' ' + arrow + (sortLevels.length > 1 ? lvlIdx + 1 : '');
+        }
+        return `<th data-key="${c.key}" style="width:${colWidths[i]}" title="Click to sort. Shift-click to add as another sort level.">${escapeHtml(c.label)}${indicator}</th>`;
+      })
       .join('') + (onDeleteRow ? '<th style="width:36px"></th>' : '');
 
     let bodyHtml;
@@ -103,9 +118,11 @@ export function createDataGrid(opts) {
       <div class="dg-toolbar">
         <input type="text" class="dg-search" placeholder="Search..." value="${escapeHtml(search)}" />
         <span class="dg-count">${all.length} row${all.length === 1 ? '' : 's'}</span>
+        ${sortLevels.length ? `<span class="dg-sort-summary">Sorted by ${sortLevels.map((s) => `${columns.find((c) => c.key === s.key)?.label || s.key} ${s.dir === 1 ? '▲' : '▼'}`).join(', then ')}</span><button class="btn btn-light btn-sm dg-clearsort" title="Clear sorting">✕ Clear sort</button>` : ''}
         <span class="topbar-spacer" style="flex:1"></span>
         ${onAddRow ? '<button class="btn btn-light btn-sm dg-add">+ Add row</button>' : ''}
       </div>
+      <div class="dg-sort-hint text-muted">Tip: click a column header to sort by it; Shift-click another header to sort by that too (e.g. Priority, then Due Date).</div>
       <div class="dg-scroll">
         <table class="dg-table" style="width:${totalWidth}px; min-width:100%;">
           ${colgroup}
@@ -162,13 +179,28 @@ export function createDataGrid(opts) {
     });
 
     container.querySelectorAll('thead th[data-key]').forEach((th) => {
-      th.addEventListener('click', () => {
+      th.addEventListener('click', (e) => {
         const key = th.dataset.key;
-        if (sortKey === key) sortDir *= -1;
-        else { sortKey = key; sortDir = 1; }
+        const idx = sortLevels.findIndex((s) => s.key === key);
+        if (e.shiftKey) {
+          if (idx > -1) {
+            sortLevels[idx].dir *= -1;
+          } else {
+            if (sortLevels.length >= MAX_SORT_LEVELS) sortLevels.shift();
+            sortLevels.push({ key, dir: 1 });
+          }
+        } else if (sortLevels.length === 1 && idx === 0) {
+          sortLevels[0].dir *= -1;
+        } else {
+          sortLevels = [{ key, dir: 1 }];
+        }
+        page = 0;
         render();
       });
     });
+
+    const clearSortBtn = container.querySelector('.dg-clearsort');
+    if (clearSortBtn) clearSortBtn.addEventListener('click', () => { sortLevels = []; page = 0; render(); });
 
     const addBtn = container.querySelector('.dg-add');
     if (addBtn) addBtn.addEventListener('click', () => { onAddRow(); page = 0; render(); });

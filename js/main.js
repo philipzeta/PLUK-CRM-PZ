@@ -12,6 +12,7 @@ import * as productKnowledgeTab from './tabs/productKnowledge.js';
 import * as sellingTab from './tabs/selling.js';
 import * as recruitmentTab from './tabs/recruitment.js';
 import * as pipelineTab from './tabs/salesPipeline.js';
+import * as todoTab from './tabs/todo.js';
 
 const TAB_MODULES = {
   'agape': agapeTab,
@@ -23,6 +24,7 @@ const TAB_MODULES = {
   'selling': sellingTab,
   'recruitment': recruitmentTab,
   'sales-pipeline': pipelineTab,
+  'todo': todoTab,
 };
 
 const DEFAULT_TAB = 'agape';

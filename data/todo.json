@@ -1,0 +1,5 @@
+{
+  "categoryOptions": ["Selling", "Recruitment", "Admin", "Follow-up", "Personal", "Other"],
+  "priorityOptions": ["Low", "Medium", "High"],
+  "rows": []
+}
