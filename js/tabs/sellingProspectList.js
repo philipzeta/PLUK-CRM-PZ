@@ -1,5 +1,5 @@
 import { loadTab, markDirty } from '../store.js';
-import { uid, escapeHtml, num, showToast, withScrollPreserved, wireMoneyInput } from '../utils.js';
+import { uid, escapeHtml, num, showToast, withScrollPreserved, wireMoneyInput, todayISO } from '../utils.js';
 import { downloadSingleSheet, readWorkbook, parseSheetRows } from '../excel.js';
 
 const STAGE_NAMES = {
@@ -73,6 +73,32 @@ export async function render(container) {
     (d.board[toLvl] || (d.board[toLvl] = [])).push(item);
     persist();
     paint();
+    // Crossing from Prospecting into Engagement & Approaching means this lead
+    // is now being actively worked — mirror them into the Selling tab so
+    // they're tracked for follow-up alerts too.
+    if (fromLvl === d.levels[0] && toLvl === d.levels[1] && item.name && item.name.trim()) {
+      syncToSellingTab(item.name.trim());
+    }
+  }
+
+  async function syncToSellingTab(name) {
+    const sd = await loadTab('selling');
+    const today = todayISO();
+    const norm = name.toLowerCase();
+    const existing = sd.rows.find((r) => (r.name || '').trim().toLowerCase() === norm);
+    if (existing) {
+      existing.lastApproachDate = today;
+      if (!existing.dateAdded) existing.dateAdded = today;
+      markDirty('selling');
+      showToast(`${name} is already in Selling — Last Approach Date updated to today.`);
+    } else {
+      sd.rows.unshift({
+        _id: uid(), response: '', source: '', demographic: '', name, status: '',
+        occupation: '', dateAdded: today, lastApproachDate: today, approachMethod: '', remarks: '',
+      });
+      markDirty('selling');
+      showToast(`Added ${name} to Selling — Date Added & Last Approach Date set to today.`);
+    }
   }
 
   function wire() {
