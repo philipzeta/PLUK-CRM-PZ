@@ -1,5 +1,6 @@
 {
-  "categoryOptions": ["Selling", "Recruitment", "Admin", "Follow-up", "Personal", "Other"],
+  "statusOptions": ["Pending", "In Progress", "Done"],
+  "categoryOptions": ["Mindset", "Trainings", "Selling", "Recruitment", "Follow Ups", "Admin", "FINSEM", "Other"],
   "priorityOptions": ["Low", "Medium", "High"],
   "rows": []
 }
