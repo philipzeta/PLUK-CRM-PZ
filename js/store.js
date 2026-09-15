@@ -21,12 +21,24 @@ function setSaveStatus(text) {
   if (el) el.textContent = text;
 }
 
-const debouncedPersist = debounce(async (id) => {
-  setSaveStatus('Saving…');
-  await dbSet(id, cache.get(id));
-  setSaveStatus('All changes saved');
-  changeListeners.forEach((fn) => fn(id));
-}, 400);
+// One debounced saver PER TAB ID — not a single shared one. A shared debounce
+// would let a markDirty() call for one tab cancel another tab's still-pending
+// save (e.g. moving a Selling Journey card schedules a save for
+// 'selling-prospect-list', and the follow-up sync into the Selling tab calls
+// markDirty('selling') a moment later; with one shared timer that second
+// call would cancel the first tab's save entirely, so the move would revert
+// on refresh even though nothing looked wrong on screen).
+const persisters = new Map();
+function getPersister(id) {
+  if (!persisters.has(id)) {
+    persisters.set(id, debounce(async () => {
+      await dbSet(id, cache.get(id));
+      setSaveStatus('All changes saved');
+      changeListeners.forEach((fn) => fn(id));
+    }, 400));
+  }
+  return persisters.get(id);
+}
 
 export async function loadTab(id) {
   if (cache.has(id)) return cache.get(id);
@@ -47,7 +59,7 @@ export function getTab(id) {
 // Call after mutating the object returned by loadTab/getTab, to persist.
 export function markDirty(id) {
   setSaveStatus('Saving…');
-  debouncedPersist(id);
+  getPersister(id)();
 }
 
 export async function replaceTab(id, data) {
