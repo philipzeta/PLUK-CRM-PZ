@@ -162,7 +162,9 @@ export function createDataGrid(opts) {
       return `<td><input class="cell-input" type="date" data-key="${c.key}" value="${toISODate(raw) || ''}" /></td>`;
     }
     if (c.type === 'number' || c.type === 'percent') {
-      return `<td><input class="cell-input" type="number" step="any" data-key="${c.key}" value="${raw === null || raw === undefined ? '' : raw}" style="text-align:right" /></td>`;
+      const minAttr = c.min !== undefined && c.min !== null ? ` min="${c.min}"` : '';
+      const maxAttr = c.max !== undefined && c.max !== null ? ` max="${c.max}"` : '';
+      return `<td><input class="cell-input" type="number" step="any"${minAttr}${maxAttr} data-key="${c.key}" value="${raw === null || raw === undefined ? '' : raw}" style="text-align:right" /></td>`;
     }
     if (c.type === 'money') {
       // A plain type="number" input can't display comma grouping, so money

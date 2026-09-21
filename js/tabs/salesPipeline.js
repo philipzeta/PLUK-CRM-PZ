@@ -1,6 +1,5 @@
 import { loadTab, markDirty } from '../store.js';
 import { uid, num, fmtMoney, fmtPercent, escapeHtml, toISODate, showToast, withScrollPreserved } from '../utils.js';
-import { createDataGrid } from '../datagrid.js';
 import { downloadWorkbook, readWorkbook, parseSheetRows } from '../excel.js';
 
 const ACT_COLUMNS = [
@@ -8,20 +7,15 @@ const ACT_COLUMNS = [
   { key: 'target', header: 'Target' },
   { key: 'w1', header: 'W1' }, { key: 'w2', header: 'W2' }, { key: 'w3', header: 'W3' }, { key: 'w4', header: 'W4' }, { key: 'w5', header: 'W5' },
 ];
-const PIPE_COLUMNS = [
-  { key: 'clientName', header: 'Client Name', aliases: ['Client Name'] },
-  { key: 'product', header: 'Product', aliases: ['Product'] },
-  { key: 'ape', header: 'APE', aliases: ['APE'] },
-  { key: 'chance', header: '% Chance of Closing', aliases: ['% Chance of Closing', 'Chance'] },
-  { key: 'targetClosingDate', header: 'Target Closing Date', aliases: ['Target Closing Date'], type: 'date' },
-  { key: 'remarks', header: 'Remarks', aliases: ['Remarks'] },
-];
 
 export async function render(container) {
   const d = await loadTab('sales-pipeline');
   d.months.forEach((m) => {
     m.activities.forEach((a) => { if (!a._id) a._id = uid(); });
-    m.pipeline.forEach((p) => { if (!p._id) p._id = uid(); });
+    // Deals used to live here too (m.pipeline) — that section moved to the
+    // Golden List tab. Old pipeline arrays are left in place, untouched, only
+    // so Golden List's one-time migration can read them; this tab no longer
+    // renders or edits them.
   });
   d.months.sort((a, b) => a.key.localeCompare(b.key));
 
@@ -38,8 +32,8 @@ export async function render(container) {
     container.innerHTML = `
       <div class="tab-header">
         <div>
-          <h1 class="tab-title">📈 Sales Pipeline</h1>
-          <p class="tab-subtitle">Weekly activity targets and your live deal pipeline — one board per month, add a new one any time.</p>
+          <h1 class="tab-title">📈 Weekly Activity</h1>
+          <p class="tab-subtitle">Weekly activity targets — one board per month, add a new one any time.</p>
         </div>
         <div class="tab-actions">
           <button class="btn btn-light" id="addMonthBtn">+ Add month</button>
@@ -77,16 +71,11 @@ export async function render(container) {
         </div>
         <button class="btn btn-light btn-sm" id="addActBtn" style="margin-top:10px;">+ Add activity row</button>
       </div>
-
-      <div class="card">
-        <h3>${escapeHtml(m.label)} — Deal Pipeline</h3>
-        <div id="pipeGridHost"></div>
-      </div>
       `}
     `;
 
     wireStatic();
-    if (m) { wireMonth(m); wirePipelineGrid(m); }
+    if (m) { wireMonth(m); }
   }
 
   function wireStatic() {
@@ -113,7 +102,6 @@ export async function render(container) {
             { _id: uid(), name: 'PRESENTATION', target: 0, weeks: [0,0,0,0,0] },
             { _id: uid(), name: 'SUBMITTED CASE', target: 0, weeks: [0,0,0,0,0] },
           ],
-      pipeline: [],
     });
     d.months.sort((a, b) => a.key.localeCompare(b.key));
     activeKey = input;
@@ -139,7 +127,6 @@ export async function render(container) {
       d.months.push({
         key, label: monthLabel(key),
         activities: m.activities.map((a) => ({ _id: uid(), name: a.name, target: a.target, weeks: [0,0,0,0,0] })),
-        pipeline: m.pipeline.map((p) => ({ ...p, _id: uid() })),
       });
       d.months.sort((a, b) => a.key.localeCompare(b.key));
       activeKey = key;
@@ -194,34 +181,11 @@ export async function render(container) {
     return nd.toISOString().slice(0, 7);
   }
 
-  function wirePipelineGrid(m) {
-    const cols = [
-      { key: 'clientName', label: 'Client Name', type: 'text', editable: true, width: '220px' },
-      { key: 'product', label: 'Product', type: 'text', editable: true, width: '140px' },
-      { key: 'ape', label: 'APE', type: 'money', editable: true, width: '110px' },
-      { key: 'chance', label: '% Chance (0-1)', type: 'number', editable: true, width: '110px' },
-      { key: 'targetClosingDate', label: 'Target Closing Date', type: 'date', editable: true, width: '150px' },
-      { key: 'remarks', label: 'Remarks', type: 'text', editable: true, width: '220px' },
-    ];
-    createDataGrid({
-      container: container.querySelector('#pipeGridHost'),
-      columns: cols,
-      getRows: () => m.pipeline,
-      onCellChange: (row, key, value) => { row[key] = value; persist(); },
-      onAddRow: () => { m.pipeline.unshift({ _id: uid(), clientName: '', product: '', ape: 0, chance: 0, targetClosingDate: '', remarks: '' }); persist(); },
-      onDeleteRow: (id) => { const i = m.pipeline.findIndex((r) => r._id === id); if (i > -1) m.pipeline.splice(i, 1); persist(); },
-      idKey: '_id',
-      pageSize: 40,
-      emptyLabel: 'No deals in the pipeline for this month yet.',
-    });
-  }
-
   function exportMonth(m) {
     const actRows = m.activities.map((a) => ({ activity: a.name, target: a.target, w1: a.weeks[0], w2: a.weeks[1], w3: a.weeks[2], w4: a.weeks[3], w5: a.weeks[4] }));
     downloadWorkbook([
       { name: 'Activities', columns: ACT_COLUMNS, rows: actRows },
-      { name: 'Pipeline', columns: PIPE_COLUMNS, rows: m.pipeline },
-    ], `Sales Pipeline - ${m.label}.xlsx`);
+    ], `Weekly Activity - ${m.label}.xlsx`);
   }
 
   async function importMonth(e, m) {
@@ -229,7 +193,7 @@ export async function render(container) {
     if (!file) return;
     try {
       const wb = await readWorkbook(file);
-      let importedAct = 0, importedPipe = 0;
+      let importedAct = 0;
       if (wb.SheetNames.includes('Activities')) {
         const rows = parseSheetRows(wb, ACT_COLUMNS, 'Activities');
         if (rows.length) {
@@ -237,15 +201,8 @@ export async function render(container) {
           importedAct = rows.length;
         }
       }
-      if (wb.SheetNames.includes('Pipeline')) {
-        const rows = parseSheetRows(wb, PIPE_COLUMNS, 'Pipeline');
-        if (rows.length) {
-          m.pipeline = rows.map((r) => ({ _id: uid(), clientName: r.clientName || '', product: r.product || '', ape: num(r.ape), chance: num(r.chance), targetClosingDate: r.targetClosingDate || '', remarks: r.remarks || '' }));
-          importedPipe = rows.length;
-        }
-      }
       persist(); paint();
-      showToast(`Imported ${importedAct} activity row(s), ${importedPipe} pipeline row(s).`);
+      showToast(`Imported ${importedAct} activity row(s).`);
     } catch (err) {
       console.error(err);
       showToast('Could not read that file.');
@@ -255,9 +212,13 @@ export async function render(container) {
   }
 
   function exportAllMonths() {
-    const sheets = d.months.map((mm) => ({ name: mm.label.slice(0, 31), columns: PIPE_COLUMNS, rows: mm.pipeline }));
+    const sheets = d.months.map((mm) => ({
+      name: mm.label.slice(0, 31),
+      columns: ACT_COLUMNS,
+      rows: mm.activities.map((a) => ({ activity: a.name, target: a.target, w1: a.weeks[0], w2: a.weeks[1], w3: a.weeks[2], w4: a.weeks[3], w5: a.weeks[4] })),
+    }));
     if (!sheets.length) { showToast('No months to export yet.'); return; }
-    downloadWorkbook(sheets, 'Sales Pipeline - All Months.xlsx');
+    downloadWorkbook(sheets, 'Weekly Activity - All Months.xlsx');
   }
 
   paint();

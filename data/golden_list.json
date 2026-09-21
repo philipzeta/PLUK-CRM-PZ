@@ -1,0 +1,36 @@
+{
+  "sourceOptions": [
+    "Facebook Main",
+    "Facebook Ads",
+    "Facebook Second Account",
+    "Facebook - Mother",
+    "Linked-in",
+    "Financial Seminar/Booth",
+    "Tiktok",
+    "PruLeads",
+    "Referrals",
+    "Career Talk",
+    "WARM MARKET",
+    "WORK",
+    "ORGANIZATION",
+    "SCHOOLMATE",
+    "REFERRALS",
+    "COLD MARKET"
+  ],
+  "demographicOptions": [
+    "FRIEND",
+    "FAMILY/RELATIVE",
+    "REFERRAL",
+    "RESELL",
+    "WORKMATE",
+    "ACQUAINTANCE",
+    "SOCIAL MEDIA FRIEND",
+    "CHURCHMATE",
+    "SCHOOLMATE",
+    "CHILD HOOD/NEIGHBORHOOD",
+    "PRULIFE LEADS"
+  ],
+  "salesRows": [],
+  "recruitmentRows": [],
+  "_migratedDealPipeline": false
+}
